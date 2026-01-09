@@ -249,18 +249,21 @@ swift test
 - Remove unused parameters, variables, and imports
 - Keep functions focused and small
 
-**Documentation:**
-- Keep documentation up to date with code changes
-- Update CLAUDE.md when architecture changes
-- Update README.md when user-facing behavior changes
-- Document non-obvious code with comments
+**Documentation (MANDATORY):**
+
+Documentation must stay in sync with code. Outdated docs are worse than no docs — they mislead future developers and cause wasted effort.
+
+- **Update CLAUDE.md** when you change architecture, add components, or discover new gotchas
+- **Update README.md** when user-facing behavior changes
+- **Update inline comments** when you change non-obvious logic
+- If you change how something works, update the docs **in the same commit**
 
 ### Code Review Checklist
 
 Before merging any feature:
 - [ ] All tests pass (`swift test`)
 - [ ] No dead code or unused variables
-- [ ] Documentation updated if needed
+- [ ] **Documentation updated** (CLAUDE.md, README.md, comments as needed)
 - [ ] Commit messages are meaningful
 - [ ] Code follows existing patterns in the codebase
 
@@ -340,6 +343,28 @@ Popularity: <stars, last commit, maintainer>
 - Swift 6.0+
 - Xcode Command Line Tools installed
 - Accessibility permission must be granted manually in System Settings
+
+### Building
+
+**Debug build** (for development):
+```bash
+swift build
+```
+
+**App bundle** (for distribution/installation):
+```bash
+./scripts/build-app.sh
+```
+
+This creates `build/Orbit.app`. To install:
+```bash
+cp -r build/Orbit.app /Applications/
+```
+
+To run:
+```bash
+open build/Orbit.app
+```
 
 ### File Organization
 
@@ -565,16 +590,28 @@ On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` w
 
 ## Logging
 
-- **Location:** `~/Library/Logs/Orbit/orbit.log`
-- **Rotation:** Keep last 5 MB, rotate when exceeded
-- **Levels:** error, warning, info, debug
-- **Default:** info (configurable via `log_level` in config.toml)
+Orbit uses **macOS unified logging** (`os.log`) with subsystem `com.orbit.Orbit`.
 
-```toml
-# In config.toml
-[settings]
-log_level = "info"  # error, warning, info, debug
+**Viewing logs:**
+
+```bash
+# Stream live logs
+log stream --predicate 'subsystem == "com.orbit.Orbit"'
+
+# View recent logs
+log show --predicate 'subsystem == "com.orbit.Orbit"' --last 1h
+
+# Filter by category
+log stream --predicate 'subsystem == "com.orbit.Orbit" AND category == "movement"'
 ```
+
+Or use **Console.app** and filter by "com.orbit.Orbit".
+
+**Log categories:**
+- `general` - App lifecycle, general info
+- `movement` - Window movement operations
+- `config` - Configuration loading/parsing
+- `monitor` - Window monitoring events
 
 ## Config Auto-Reload
 
