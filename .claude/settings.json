@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "BRANCH=$(git -C \"$CLAUDE_PROJECT_DIR\" branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ]; then echo \"BLOCKED: You are on the main branch. Create a worktree first:\\n\\n  git worktree add ../Orbit-feature-name -b feature/feature-name\\n  cd ../Orbit-feature-name\\n\\nSee CLAUDE.md for the full workflow.\" >&2; exit 2; fi"
+            "command": "FILE_PATH=$(cat | jq -r '.file_path // empty'); if [ -n \"$FILE_PATH\" ]; then DIR=$(dirname \"$FILE_PATH\"); BRANCH=$(git -C \"$DIR\" branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ]; then echo \"BLOCKED: You are on the main branch. Create a worktree first:\\n\\n  git worktree add ../Orbit-feature-name -b feature/feature-name\\n  cd ../Orbit-feature-name\\n\\nSee CLAUDE.md for the full workflow.\" >&2; exit 2; fi; fi"
           }
         ]
       }
