@@ -133,19 +133,34 @@ If you find yourself:
 **Don't keep digging.** Instead:
 
 ```bash
-# 1. Document what didn't work (in main worktree)
-cd ~/Documents/Orbit
-# Add notes to CLAUDE.md or a LEARNINGS.md file
-
-# 2. Abandon the broken worktree
+# 1. Abandon the broken worktree
 git worktree remove --force ../Orbit-feature-name
 git branch -D feature/feature-name  # Force delete
 
-# 3. Start fresh with a new approach
+# 2. Create a docs branch to record what didn't work
+git worktree add ../Orbit-docs -b docs/learnings-update
+cd ../Orbit-docs
+
+# 3. Update CLAUDE.md "Lessons Learned" section with what failed
+# Edit the file, then commit
+
+git add CLAUDE.md
+git commit -m "docs: document failed approach for feature-name
+
+Tried X approach, failed because Y.
+See Lessons Learned section for details."
+
+# 4. Merge docs branch to main (request approval if needed)
+cd ~/Documents/Orbit
+git merge docs/learnings-update
+git worktree remove ../Orbit-docs
+git branch -d docs/learnings-update
+
+# 5. Start fresh with a new approach
 git worktree add ../Orbit-feature-name-v2 -b feature/feature-name-v2
 ```
 
-**Document failed approaches** in this file under "Lessons Learned" so future agents don't repeat the same mistakes.
+**Document failed approaches** in this file under "Lessons Learned" so future agents don't repeat the same mistakes. Always use a branch — never commit directly to main.
 
 ### Lessons Learned
 
