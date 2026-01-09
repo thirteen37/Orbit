@@ -1,5 +1,30 @@
 # Orbit - Development Guide
 
+---
+
+## CRITICAL: Read Before Making Any Changes
+
+**STOP. Before writing any code, creating any files, or making any modifications:**
+
+1. **Check which branch you're on:** `git branch --show-current`
+2. **If you're on `main`, you MUST create a worktree first:**
+   ```bash
+   git worktree add ../Orbit-feature-name -b feature/feature-name
+   cd ../Orbit-feature-name
+   ```
+3. **Only then** proceed with your work
+
+**Why this matters:** Multiple agents may work concurrently. Working directly on `main` causes conflicts and breaks the shared codebase. The `main` branch must always be clean and deployable.
+
+**The only exceptions** (require explicit user approval):
+- Merging a completed feature branch
+- Emergency hotfixes with user permission
+- Documentation-only changes to CLAUDE.md itself
+
+If you've already made changes on `main` by mistake, ask the user how to proceed before committing.
+
+---
+
 ## Overview
 
 Orbit is a macOS menubar utility that automatically assigns windows to specific Spaces based on configurable rules. It solves the problem of managing multiple windows from the same app (e.g., Chrome work profile vs personal profile) that need to live on different Spaces.
@@ -9,6 +34,26 @@ Orbit is a macOS menubar utility that automatically assigns windows to specific 
 ### Git Workflow
 
 **Always use git worktrees for feature development.** Multiple agents may work concurrently, and worktrees prevent conflicts.
+
+#### Pre-Flight Checklist (REQUIRED before any code changes)
+
+```bash
+# 1. Verify you're not on main
+git branch --show-current
+# If this shows "main", STOP and create a worktree
+
+# 2. Check for existing worktrees you might resume
+git worktree list
+
+# 3. Create a new worktree OR cd into existing one
+git worktree add ../Orbit-feature-name -b feature/feature-name
+cd ../Orbit-feature-name
+
+# 4. Verify you're in the worktree
+pwd  # Should show ../Orbit-feature-name, NOT ../Orbit
+```
+
+#### Standard Workflow
 
 ```bash
 # Create a worktree for a new feature
@@ -27,7 +72,7 @@ git branch -d feature/feature-name
 ```
 
 **Branch rules:**
-- **Never work directly on `main`** without explicit approval
+- **NEVER work directly on `main`** — this is non-negotiable
 - `main` must always be clean and working
 - Create feature branches for all work: `feature/space-mover`, `feature/window-monitor`, etc.
 - Merge only after tests pass
@@ -221,17 +266,26 @@ Before merging any feature:
 
 ### Agentic Development Guidelines
 
+**First thing every session — verify your branch:**
+```bash
+git branch --show-current  # Must NOT be "main"
+pwd                        # Must be a worktree, not ~/Documents/Orbit
+```
+If either check fails, create a worktree before doing anything else. See "Pre-Flight Checklist" above.
+
 **Build incrementally:**
 - Build after writing each component — don't write 500 lines then discover it doesn't compile
 - Run `swift build` frequently during development
 - Test each piece before moving to the next
 
 **Verify assumptions:**
+- Don't assume you're on the right branch — check
 - Don't assume code works — run it
 - Don't assume tests pass — run them
 - Don't assume permissions are granted — check
 
 **When to stop and ask (requires human approval):**
+- **Any work directly on `main` branch** — always use worktrees
 - Architectural changes not in the plan
 - Adding obscure dependencies (see dependency policy below)
 - Changing public APIs or config format
