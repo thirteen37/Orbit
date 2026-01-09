@@ -96,6 +96,7 @@ public final class SpaceTracker: @unchecked Sendable {
         }
 
         isTracking = true
+        Logger.info("SpaceTracker: Started tracking, currently on space \(currentSpaceIndex) of \(spaceCount)", category: .monitor)
     }
 
     /// Stop observing space changes
@@ -156,11 +157,13 @@ public final class SpaceTracker: @unchecked Sendable {
         let newIndex = spaceIDToIndex[newSpaceID] ?? 1
 
         let didChange = newSpaceID != currentSpaceID
+        let oldIndex = currentSpaceIndex
 
         currentSpaceID = newSpaceID
         currentSpaceIndex = newIndex
 
         if didChange {
+            Logger.debug("SpaceTracker: Space changed from \(oldIndex) to \(newIndex)", category: .monitor)
             delegate?.spaceTracker(self, didChangeToSpace: newIndex, spaceID: newSpaceID)
         }
     }

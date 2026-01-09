@@ -147,6 +147,7 @@ public final class WindowMonitor: @unchecked Sendable {
 
         // Check accessibility permission
         guard AXIsProcessTrusted() else {
+            Logger.warning("WindowMonitor: Accessibility not trusted", category: .monitor)
             throw WindowMonitorError.accessibilityNotTrusted
         }
 
@@ -154,11 +155,15 @@ public final class WindowMonitor: @unchecked Sendable {
         setupWorkspaceObservers()
 
         // Register observers for currently running apps
+        var registeredCount = 0
         for app in NSWorkspace.shared.runningApplications {
-            registerObserver(for: app)
+            if registerObserver(for: app) {
+                registeredCount += 1
+            }
         }
 
         isMonitoring = true
+        Logger.info("WindowMonitor: Started monitoring \(registeredCount) apps", category: .monitor)
     }
 
     /// Stop monitoring for window creation events
@@ -300,14 +305,16 @@ public final class WindowMonitor: @unchecked Sendable {
     }
 
     /// Register an AXObserver for an application
-    private func registerObserver(for app: NSRunningApplication) {
-        guard shouldMonitor(app: app) else { return }
-        guard let bundleID = app.bundleIdentifier else { return }
+    /// - Returns: true if observer was registered successfully
+    @discardableResult
+    private func registerObserver(for app: NSRunningApplication) -> Bool {
+        guard shouldMonitor(app: app) else { return false }
+        guard let bundleID = app.bundleIdentifier else { return false }
 
         let pid = app.processIdentifier
 
         // Don't register duplicate observers
-        guard observers[pid] == nil else { return }
+        guard observers[pid] == nil else { return false }
 
         // Store app info
         let appName = app.localizedName ?? bundleID
@@ -322,7 +329,8 @@ public final class WindowMonitor: @unchecked Sendable {
         )
 
         guard result == .success, let observer = observer else {
-            return
+            Logger.debug("WindowMonitor: Failed to create observer for \(appName) (pid \(pid))", category: .monitor)
+            return false
         }
 
         // Add notification for window creation
@@ -335,7 +343,8 @@ public final class WindowMonitor: @unchecked Sendable {
         )
 
         guard addResult == .success else {
-            return
+            Logger.debug("WindowMonitor: Failed to add notification for \(appName) (pid \(pid))", category: .monitor)
+            return false
         }
 
         // Add to run loop
@@ -346,6 +355,8 @@ public final class WindowMonitor: @unchecked Sendable {
         )
 
         observers[pid] = observer
+        Logger.debug("WindowMonitor: Registered observer for \(appName) (\(bundleID))", category: .monitor)
+        return true
     }
 
     /// Check if an app should be monitored
@@ -365,13 +376,23 @@ public final class WindowMonitor: @unchecked Sendable {
 
     /// Handle a window creation notification
     fileprivate func handleWindowCreated(_ windowElement: AXUIElement, pid: pid_t) {
-        guard let info = appInfo[pid] else { return }
+        guard let info = appInfo[pid] else {
+            Logger.debug("WindowMonitor: Window created for unknown pid \(pid)", category: .monitor)
+            return
+        }
+
+        Logger.debug("WindowMonitor: Window created callback for \(info.appName) (pid \(pid))", category: .monitor)
 
         // Delay briefly to allow window title to be set
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
 
-            guard let title = self.getWindowTitle(windowElement) else { return }
+            guard let title = self.getWindowTitle(windowElement) else {
+                Logger.debug("WindowMonitor: Could not get title for window from \(info.appName)", category: .monitor)
+                return
+            }
+
+            Logger.debug("WindowMonitor: Window title: '\(title)' from \(info.appName)", category: .monitor)
 
             let windowInfo = WindowInfo(
                 bundleID: info.bundleID,

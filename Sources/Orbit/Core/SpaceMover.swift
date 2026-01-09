@@ -128,8 +128,11 @@ public final class SpaceMover {
         fromSpace currentSpace: Int,
         using shortcut: KeyboardShortcut
     ) throws {
+        Logger.debug("SpaceMover: Moving window from space \(currentSpace) to space \(targetSpace)", category: .movement)
+
         // Check accessibility permission
         guard SpaceMover.isAccessibilityTrusted() else {
+            Logger.error("SpaceMover: Accessibility not trusted", category: .movement)
             throw SpaceMoverError.accessibilityNotTrusted
         }
 
@@ -142,20 +145,24 @@ public final class SpaceMover {
         )
 
         guard positionResult == .success, let positionRef = positionValue else {
+            Logger.error("SpaceMover: Cannot get window position", category: .movement)
             throw SpaceMoverError.cannotGetWindowPosition
         }
 
         var windowOrigin = CGPoint.zero
         guard AXValueGetValue(positionRef as! AXValue, .cgPoint, &windowOrigin) else {
+            Logger.error("SpaceMover: Cannot extract position value", category: .movement)
             throw SpaceMoverError.cannotGetWindowPosition
         }
 
         // Calculate grab point (title bar area)
         // 70 pixels from left edge, 12 pixels from top
         let grabPoint = CGPoint(x: windowOrigin.x + 70, y: windowOrigin.y + 12)
+        Logger.debug("SpaceMover: Window at (\(Int(windowOrigin.x)), \(Int(windowOrigin.y))), grab point (\(Int(grabPoint.x)), \(Int(grabPoint.y)))", category: .movement)
 
         // Create event source
         guard let eventSource = CGEventSource(stateID: .hidSystemState) else {
+            Logger.error("SpaceMover: Failed to create event source", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
 
@@ -166,9 +173,11 @@ public final class SpaceMover {
             mouseCursorPosition: grabPoint,
             mouseButton: .left
         ) else {
+            Logger.error("SpaceMover: Failed to create mouse move event", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
         mouseMoveEvent.post(tap: .cghidEventTap)
+        Logger.debug("SpaceMover: Posted mouse move to grab point", category: .movement)
 
         // Small delay to ensure cursor is in position
         usleep(50_000)  // 50ms
@@ -180,9 +189,11 @@ public final class SpaceMover {
             mouseCursorPosition: grabPoint,
             mouseButton: .left
         ) else {
+            Logger.error("SpaceMover: Failed to create mouse down event", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
         mouseDownEvent.post(tap: .cghidEventTap)
+        Logger.debug("SpaceMover: Posted mouse down (grabbing window)", category: .movement)
 
         // Small delay to ensure grab is registered
         usleep(100_000)  // 100ms
@@ -190,13 +201,16 @@ public final class SpaceMover {
         // Post keyboard shortcut for space switch
         // Key down
         guard let keyDownEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: shortcut.keyCode, keyDown: true) else {
+            Logger.error("SpaceMover: Failed to create key down event", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
         keyDownEvent.flags = shortcut.modifierFlags
         keyDownEvent.post(tap: .cghidEventTap)
+        Logger.debug("SpaceMover: Posted keyboard shortcut (keyCode \(shortcut.keyCode))", category: .movement)
 
         // Key up
         guard let keyUpEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: shortcut.keyCode, keyDown: false) else {
+            Logger.error("SpaceMover: Failed to create key up event", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
         keyUpEvent.flags = shortcut.modifierFlags
@@ -212,8 +226,11 @@ public final class SpaceMover {
             mouseCursorPosition: grabPoint,
             mouseButton: .left
         ) else {
+            Logger.error("SpaceMover: Failed to create mouse up event", category: .movement)
             throw SpaceMoverError.eventCreationFailed
         }
         mouseUpEvent.post(tap: .cghidEventTap)
+        Logger.debug("SpaceMover: Posted mouse up (released window)", category: .movement)
+        Logger.info("SpaceMover: Move sequence completed", category: .movement)
     }
 }

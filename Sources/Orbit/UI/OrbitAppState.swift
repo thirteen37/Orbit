@@ -288,6 +288,9 @@ public final class OrbitAppState: ObservableObject {
                 Logger.error(errorMessage, category: .movement)
                 lastError = errorMessage
             }
+        } else {
+            // No rule matched - the WindowMatcher already logged details
+            Logger.debug("No rule matched for '\(windowInfo.title)' from \(windowInfo.appName)", category: .monitor)
         }
     }
 

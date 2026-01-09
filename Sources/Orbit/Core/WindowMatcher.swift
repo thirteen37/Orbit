@@ -68,15 +68,44 @@ public final class WindowMatcher: Sendable {
     ///   - windowTitle: Window title
     /// - Returns: MatchResult if a rule matches, nil otherwise
     public func match(appName: String, bundleID: String, windowTitle: String) -> MatchResult? {
+        Logger.debug(
+            "Evaluating window: '\(windowTitle)' from '\(appName)' (\(bundleID))",
+            category: .monitor
+        )
+
         for (index, rule) in rules.enumerated() {
+            let appMatches = rule.app.lowercased() == appName.lowercased() ||
+                             rule.app.lowercased() == bundleID.lowercased()
+
             if rule.matches(appName: appName, bundleID: bundleID, windowTitle: windowTitle) {
+                Logger.debug(
+                    "Rule \(index) MATCHED: app='\(rule.app)' → space \(rule.space)",
+                    category: .monitor
+                )
                 return MatchResult(
                     rule: rule,
                     targetSpace: rule.space,
                     ruleIndex: index
                 )
+            } else {
+                // Log why it didn't match
+                if !appMatches {
+                    Logger.debug(
+                        "Rule \(index) no match: app='\(rule.app)' != '\(appName)' or '\(bundleID)'",
+                        category: .monitor
+                    )
+                } else {
+                    // App matched but title didn't
+                    let titleMatcher = rule.titleContains ?? rule.titlePattern ?? "(none)"
+                    Logger.debug(
+                        "Rule \(index) no match: app matched, but title '\(windowTitle)' didn't match '\(titleMatcher)'",
+                        category: .monitor
+                    )
+                }
             }
         }
+
+        Logger.debug("No rules matched for this window", category: .monitor)
         return nil
     }
 
