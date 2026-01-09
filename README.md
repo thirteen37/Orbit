@@ -28,10 +28,21 @@ This approach works without disabling SIP (System Integrity Protection).
 
 ## Configuration
 
-Edit `~/.config/orbit/rules.toml`:
+On first run, Orbit creates `~/.config/orbit/config.toml` with a sample configuration.
 
 ```toml
-# Chrome profiles to different spaces
+# Keyboard shortcuts (must match your macOS Mission Control settings)
+[shortcuts]
+space_1 = "ctrl+1"
+space_2 = "ctrl+2"
+space_3 = "ctrl+3"
+# ... add more as needed
+
+# Fallback for relative movement
+space_left = "ctrl+left"
+space_right = "ctrl+right"
+
+# Window rules
 [[rules]]
 app = "Google Chrome"
 title_contains = "Work"
@@ -42,18 +53,13 @@ app = "Google Chrome"
 title_contains = "Personal"
 space = 2
 
-# Terminal dev sessions
 [[rules]]
 app = "Terminal"
 title_pattern = "^dev-.*"
 space = 3
-
-# All VS Code windows to space 3
-[[rules]]
-app = "Visual Studio Code"
-title_contains = "myproject"
-space = 3
 ```
+
+**Note:** Spaces are numbered by position (1 = leftmost). For direct jumps to work, enable "Switch to Desktop N" shortcuts in System Settings → Keyboard → Keyboard Shortcuts → Mission Control.
 
 ## Installation
 
