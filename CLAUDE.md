@@ -32,6 +32,76 @@ git branch -d feature/feature-name
 - Create feature branches for all work: `feature/space-mover`, `feature/window-monitor`, etc.
 - Merge only after tests pass
 
+### Multi-Agent Coordination
+
+Multiple agents may work concurrently on different features. Each agent works in its own worktree, isolated from others.
+
+**Project tracking:**
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `TODO.md` | `main` only | Project-level feature list, updated only at merge time |
+| Branch commits | Each branch | History of what was done — this IS the handoff |
+| Code + tests | Each branch | Current state speaks for itself |
+
+**No separate handoff files.** Git history serves as the handoff mechanism.
+
+**Starting a session:**
+```bash
+# 1. Check TODO.md on main for available work
+git show main:TODO.md
+
+# 2. Create worktree for your feature
+git worktree add ../Orbit-feature-name -b feature/feature-name
+
+# 3. Read recent commits if resuming existing branch
+git log --oneline -10
+```
+
+**During work:**
+- Commit frequently with meaningful messages
+- Each commit should be a resumable checkpoint
+- Message format for WIP: `WIP: completed X, next step Y`
+
+**Ending a session (incomplete work):**
+```bash
+# Commit current state with clear next-step message
+git add -A
+git commit -m "WIP: implemented basic rule matching
+
+Done:
+- Rule struct with app/title matching
+- TOML parsing for rules array
+
+Next:
+- Add regex support for title_pattern
+- Write unit tests for edge cases"
+```
+
+**Resuming someone else's work:**
+```bash
+# Read recent commits to understand state
+git log --oneline -10
+git log -1  # Full message of last commit
+
+# Look at current code
+# Continue from where they left off
+```
+
+**Completing a feature:**
+```bash
+# 1. Ensure all tests pass
+swift test
+
+# 2. Update TODO.md to mark feature complete
+# 3. Request merge to main (requires approval)
+```
+
+**Conflict avoidance:**
+- Agents work in separate worktrees — no file conflicts during development
+- `TODO.md` only updated at merge time, not during feature work
+- If two agents need the same file, coordinate via human or sequential work
+
 ### Testing Requirements
 
 Include relevant tests with each major feature:
