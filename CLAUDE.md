@@ -233,7 +233,7 @@ Before merging any feature:
 
 **When to stop and ask (requires human approval):**
 - Architectural changes not in the plan
-- Adding new dependencies (see dependency policy below)
+- Adding obscure dependencies (see dependency policy below)
 - Changing public APIs or config format
 - Anything that affects user data or security
 - Merging to `main`
@@ -244,9 +244,8 @@ Before merging any feature:
 **Prefer Swift standard library.** Only add external dependencies when stdlib genuinely can't do the job.
 
 **When external deps are needed:**
-1. **Prefer popular, well-supported libraries** — active maintenance, large user base, good documentation
-2. **Check before adding** — adding any dependency requires approval
-3. **Obscure libraries** — if a less-known library is a substantially better fit, make the case and ask
+1. **Popular, well-supported libraries** — can add autonomously (active maintenance, large user base, good docs)
+2. **Obscure libraries** — requires approval; make the case if it's a substantially better fit
 
 **Evaluation criteria:**
 - GitHub stars / recent commits / open issues
@@ -260,12 +259,12 @@ Before merging any feature:
 |------------|---------|-----|
 | TOMLKit | TOML config parsing | Stdlib has no TOML support; TOMLKit is well-maintained |
 
-**To propose a new dependency:**
+**To propose an obscure dependency:**
 ```
 Dependency: <name>
 Purpose: <what we need it for>
 Why not stdlib: <why stdlib can't do this>
-Alternatives considered: <other options and why this is better>
+Why not a popular alternative: <why this obscure lib is better>
 Popularity: <stars, last commit, maintainer>
 ```
 
