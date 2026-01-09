@@ -441,6 +441,42 @@ Spaces are identified by position (1 = leftmost, 2 = next, etc.).
 
 On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` with a commented sample configuration and logs a message directing the user to edit it.
 
+## User Interface
+
+**Menubar app** — appears in menu bar (top right), hidden from Dock.
+
+```
+┌─────────────────────────────┐
+│ Orbit                       │
+├─────────────────────────────┤
+│ ● Watching (3 rules)        │  ← Status indicator
+├─────────────────────────────┤
+│ Pause                       │  ← Toggle to "Resume" when paused
+│ Reload Config               │  ← Re-read config.toml
+│ Open Config...              │  ← Opens in default editor
+├─────────────────────────────┤
+│ Recent Activity         ▶   │  ← Submenu with last ~5 moves
+│   Chrome "Work" → Space 1   │
+│   Terminal "dev" → Space 3  │
+├─────────────────────────────┤
+│ Start at Login          ☑   │  ← Toggle LaunchAgent
+├─────────────────────────────┤
+│ About Orbit                 │
+│ Quit                        │
+└─────────────────────────────┘
+```
+
+| Menu Item | Action |
+|-----------|--------|
+| Status line | Shows rule count; error state if config invalid |
+| Pause/Resume | Temporarily stop watching without quitting |
+| Reload Config | Re-read TOML without restart |
+| Open Config... | Opens config file in default editor |
+| Recent Activity | Submenu showing last ~5 window moves |
+| Start at Login | Toggle LaunchAgent on/off |
+| About | Version info |
+| Quit | Exit app |
+
 ## Behavior
 
 - **On launch:** Scan all windows of configured apps, move matches
