@@ -11,7 +11,7 @@ struct OrbitApp: App {
         MenuBarExtra {
             MenuBarView(appState: appState)
         } label: {
-            Image(systemName: appState.isPaused ? "circle.grid.2x2" : "circle.grid.2x2.fill")
+            OrbitIcon(isActive: !appState.isPaused)
         }
     }
 }

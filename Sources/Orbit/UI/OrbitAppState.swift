@@ -171,6 +171,28 @@ public final class OrbitAppState: ObservableObject {
         configManager.openConfigInEditor()
     }
 
+    /// Open log in Console.app filtered for Orbit
+    public func openLog() {
+        // Use 'log' command to stream Orbit logs in Terminal for better UX
+        // Console.app filtering via AppleScript is unreliable, so we use Terminal with log stream
+        let logCommand = "log stream --predicate 'subsystem == \"com.orbit.Orbit\"' --level debug"
+
+        let script = """
+            tell application "Terminal"
+                activate
+                do script "\(logCommand)"
+            end tell
+            """
+        if let appleScript = NSAppleScript(source: script) {
+            var error: NSDictionary?
+            appleScript.executeAndReturnError(&error)
+            if let error = error {
+                Logger.warning("Failed to open log stream: \(error)", category: .general)
+            }
+        }
+        Logger.info("Opened log stream in Terminal", category: .general)
+    }
+
     /// Request accessibility permission from user
     public func requestAccessibility() {
         SpaceMover.requestAccessibility()
