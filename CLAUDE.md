@@ -78,6 +78,81 @@ Before merging any feature:
 - [ ] Commit messages are meaningful
 - [ ] Code follows existing patterns in the codebase
 
+### Agentic Development Guidelines
+
+**Build incrementally:**
+- Build after writing each component — don't write 500 lines then discover it doesn't compile
+- Run `swift build` frequently during development
+- Test each piece before moving to the next
+
+**Verify assumptions:**
+- Don't assume code works — run it
+- Don't assume tests pass — run them
+- Don't assume permissions are granted — check
+
+**When to stop and ask (requires human approval):**
+- Architectural changes not in the plan
+- Adding new dependencies
+- Changing public APIs or config format
+- Anything that affects user data or security
+- Merging to `main`
+- Deleting significant code
+
+**When to proceed autonomously:**
+- Implementing features as specified in the plan
+- Writing tests for new code
+- Fixing bugs discovered during development
+- Refactoring for clarity (without changing behavior)
+- Updating documentation to match code
+
+**Error recovery:**
+- If build fails: fix the error before proceeding, don't pile on more code
+- If tests fail: fix the failing test before writing new tests
+- If stuck: document what was tried and ask for help
+- If unclear: ask rather than guess
+
+**Environment requirements:**
+- macOS 14.5+ (Sonoma) or later
+- Swift 6.0+
+- Xcode Command Line Tools installed
+- Accessibility permission must be granted manually in System Settings
+
+### File Organization
+
+```
+Orbit/
+├── Sources/Orbit/
+│   ├── main.swift              # Entry point only
+│   ├── OrbitApp.swift          # App definition
+│   ├── Core/                   # Business logic
+│   ├── Config/                 # Configuration handling
+│   └── UI/                     # SwiftUI views
+├── Tests/OrbitTests/           # All tests here
+├── examples/                   # Example configs
+├── CLAUDE.md                   # This file (agent guidance)
+└── README.md                   # User documentation
+```
+
+**Naming conventions:**
+- Files: PascalCase matching the primary type (`SpaceMover.swift`)
+- Types: PascalCase (`WindowMatcher`, `Rule`)
+- Functions/variables: camelCase (`moveWindow`, `currentSpace`)
+- Test files: `<Component>Tests.swift`
+
+### Known Gotchas
+
+1. **Accessibility permission** — Cannot be granted programmatically. User must manually enable in System Settings → Privacy & Security → Accessibility. App will fail silently without it.
+
+2. **CGEvent posting** — Requires the app to be trusted. First run will prompt user.
+
+3. **Space switching animation** — Takes ~300ms. Code must wait or movements will fail.
+
+4. **Window title timing** — New windows may have empty/generic titles briefly after creation. May need short delay before matching.
+
+5. **Full-screen windows** — Cannot be moved between spaces with our technique.
+
+6. **Sandboxed apps** — Accessibility API doesn't work from sandboxed apps. Orbit must be distributed outside App Store or with entitlements.
+
 ---
 
 ## Technical Background
