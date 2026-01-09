@@ -102,6 +102,62 @@ swift test
 - `TODO.md` only updated at merge time, not during feature work
 - If two agents need the same file, coordinate via human or sequential work
 
+### Cleanup and Rollbacks
+
+**Worktree cleanup (after successful merge):**
+```bash
+# 1. Merge the feature (from main worktree)
+cd ~/Documents/Orbit
+git merge feature/feature-name
+
+# 2. Remove the worktree from filesystem
+git worktree remove ../Orbit-feature-name
+
+# 3. Delete the branch
+git branch -d feature/feature-name
+
+# 4. Verify cleanup
+git worktree list   # Should not show the removed worktree
+git branch          # Should not show the deleted branch
+```
+
+**All three steps are required.** Don't leave orphaned worktrees or branches.
+
+**When to abandon and start fresh:**
+
+If you find yourself:
+- In a loop making the same changes repeatedly
+- Fighting the compiler with no progress for 10+ attempts
+- Realizing the approach is fundamentally flawed
+
+**Don't keep digging.** Instead:
+
+```bash
+# 1. Document what didn't work (in main worktree)
+cd ~/Documents/Orbit
+# Add notes to CLAUDE.md or a LEARNINGS.md file
+
+# 2. Abandon the broken worktree
+git worktree remove --force ../Orbit-feature-name
+git branch -D feature/feature-name  # Force delete
+
+# 3. Start fresh with a new approach
+git worktree add ../Orbit-feature-name-v2 -b feature/feature-name-v2
+```
+
+**Document failed approaches** in this file under "Lessons Learned" so future agents don't repeat the same mistakes.
+
+### Lessons Learned
+
+_Document failed approaches here so agents don't repeat mistakes._
+
+<!-- Example:
+### SpaceMover: CGEvent timing (2024-01-15)
+**What was tried:** Posting mouse and keyboard events without delays
+**Why it failed:** Space switching animation takes ~300ms; events posted too fast get lost
+**Solution:** Added usleep(300_000) between space switches
+-->
+
 ### Testing Requirements
 
 Include relevant tests with each major feature:
