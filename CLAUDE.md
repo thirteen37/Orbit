@@ -372,7 +372,11 @@ Sources/Orbit/
 Core movement logic using CGEvents:
 - Get window position via Accessibility API
 - Calculate title bar grab point
-- Post mouse down → Ctrl+Arrow → mouse up events
+- Post mouse down event
+- Send space switch shortcut:
+  - **Direct jump (preferred):** Ctrl+Number from config (e.g., Ctrl+2 for space 2)
+  - **Fallback:** Relative Ctrl+Arrow if direct jump not configured for target space
+- Post mouse up event
 - Handle timing delays for space switching animation
 
 ### WindowMonitor.swift
@@ -393,8 +397,24 @@ Core movement logic using CGEvents:
 ## Configuration Format
 
 ```toml
-# ~/.config/orbit/rules.toml
+# ~/.config/orbit/config.toml
 
+# Keyboard shortcuts for switching spaces
+# These should match your System Settings > Keyboard > Shortcuts > Mission Control
+[shortcuts]
+# Direct jump shortcuts (preferred - Ctrl+Number)
+space_1 = "ctrl+1"
+space_2 = "ctrl+2"
+space_3 = "ctrl+3"
+space_4 = "ctrl+4"
+space_5 = "ctrl+5"
+# Add more as needed for your number of spaces
+
+# Fallback: relative movement (used if direct jump unavailable)
+space_left = "ctrl+left"
+space_right = "ctrl+right"
+
+# Window-to-space rules
 [[rules]]
 app = "Google Chrome"
 title_contains = "Work"
@@ -410,6 +430,16 @@ app = "Terminal"
 title_pattern = "^dev-.*"    # regex
 space = 3
 ```
+
+### Space Numbering
+
+Spaces are identified by position (1 = leftmost, 2 = next, etc.).
+
+**Important:** If you reorder spaces in Mission Control, your config will need updating to match the new positions.
+
+### Onboarding
+
+On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` with a commented sample configuration and logs a message directing the user to edit it.
 
 ## Behavior
 

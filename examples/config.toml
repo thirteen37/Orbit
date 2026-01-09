@@ -1,0 +1,67 @@
+# Orbit Configuration
+# Copy this file to ~/.config/orbit/config.toml
+#
+# Orbit assigns windows to spaces based on title patterns.
+# For app-level assignment (all windows of an app), use native macOS:
+# Dock → right-click app → Options → Assign to This Desktop
+
+# ─────────────────────────────────────────────────────────
+# Keyboard Shortcuts
+# ─────────────────────────────────────────────────────────
+# These must match your macOS settings:
+# System Settings → Keyboard → Keyboard Shortcuts → Mission Control
+#
+# By default, macOS has Ctrl+Arrow enabled but Ctrl+Number disabled.
+# For best results, enable "Switch to Desktop N" shortcuts in System Settings.
+
+[shortcuts]
+# Direct jump to specific space (preferred)
+# Format: "ctrl+N" or "ctrl+shift+N" etc.
+space_1 = "ctrl+1"
+space_2 = "ctrl+2"
+space_3 = "ctrl+3"
+space_4 = "ctrl+4"
+space_5 = "ctrl+5"
+
+# Relative movement (fallback if direct jump not available)
+space_left = "ctrl+left"
+space_right = "ctrl+right"
+
+# ─────────────────────────────────────────────────────────
+# Window Rules
+# ─────────────────────────────────────────────────────────
+# Spaces are numbered by position: 1 = leftmost, 2 = next, etc.
+# If you reorder spaces in Mission Control, update these numbers.
+
+# Chrome: different profiles to different spaces
+[[rules]]
+app = "Google Chrome"
+title_contains = "Work"
+space = 1
+
+[[rules]]
+app = "Google Chrome"
+title_contains = "Personal"
+space = 2
+
+# Terminal: dev sessions to space 3
+[[rules]]
+app = "Terminal"
+title_pattern = "^dev-.*"    # regex pattern
+space = 3
+
+# VS Code: project-specific windows
+[[rules]]
+app = "Visual Studio Code"
+title_contains = "myproject"
+space = 3
+
+# ─────────────────────────────────────────────────────────
+# Rule Format Reference
+# ─────────────────────────────────────────────────────────
+#
+# [[rules]]
+# app = "App Name"           # App display name or bundle ID
+# title_contains = "text"    # Simple substring match (case-insensitive)
+# title_pattern = "^regex.*" # OR regex pattern (use one or the other)
+# space = 1                  # Target space number (1-indexed, leftmost = 1)
