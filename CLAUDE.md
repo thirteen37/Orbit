@@ -233,11 +233,41 @@ Before merging any feature:
 
 **When to stop and ask (requires human approval):**
 - Architectural changes not in the plan
-- Adding new dependencies
+- Adding new dependencies (see dependency policy below)
 - Changing public APIs or config format
 - Anything that affects user data or security
 - Merging to `main`
 - Deleting significant code
+
+### Dependency Policy
+
+**Prefer Swift standard library.** Only add external dependencies when stdlib genuinely can't do the job.
+
+**When external deps are needed:**
+1. **Prefer popular, well-supported libraries** — active maintenance, large user base, good documentation
+2. **Check before adding** — adding any dependency requires approval
+3. **Obscure libraries** — if a less-known library is a substantially better fit, make the case and ask
+
+**Evaluation criteria:**
+- GitHub stars / recent commits / open issues
+- Does it have breaking changes often?
+- Is it maintained by a reputable org or individual?
+- How heavy is the dependency tree? (Prefer minimal transitive deps)
+
+**Current approved dependencies:**
+
+| Dependency | Purpose | Why |
+|------------|---------|-----|
+| TOMLKit | TOML config parsing | Stdlib has no TOML support; TOMLKit is well-maintained |
+
+**To propose a new dependency:**
+```
+Dependency: <name>
+Purpose: <what we need it for>
+Why not stdlib: <why stdlib can't do this>
+Alternatives considered: <other options and why this is better>
+Popularity: <stars, last commit, maintainer>
+```
 
 **When to proceed autonomously:**
 - Implementing features as specified in the plan
