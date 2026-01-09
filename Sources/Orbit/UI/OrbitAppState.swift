@@ -48,6 +48,9 @@ public final class OrbitAppState: ObservableObject {
     /// Whether accessibility permission is granted
     @Published public var hasAccessibility: Bool = false
 
+    /// Last error that occurred during operation (for UI display)
+    @Published public var lastError: String? = nil
+
     // MARK: - Components
 
     private let configManager: ConfigManager
@@ -56,6 +59,9 @@ public final class OrbitAppState: ObservableObject {
     private let spaceTracker: SpaceTracker
     private let spaceMover: SpaceMover
     private var shortcuts: Shortcuts = Shortcuts()
+
+    /// Retry handler for transient failures
+    private let retryHandler = RetryHandler(maxAttempts: 2, delayBetweenAttempts: 0.3)
 
     // MARK: - Initialization
 
@@ -81,8 +87,15 @@ public final class OrbitAppState: ObservableObject {
     // MARK: - Setup
 
     private func setup() {
+        Logger.info("Orbit starting up", category: .general)
+
         // Check accessibility permission
         hasAccessibility = SpaceMover.isAccessibilityTrusted()
+        if hasAccessibility {
+            Logger.info("Accessibility permission granted", category: .general)
+        } else {
+            Logger.warning("Accessibility permission not granted", category: .general)
+        }
 
         // Load configuration
         loadConfig()
@@ -97,9 +110,14 @@ public final class OrbitAppState: ObservableObject {
 
     /// Load or reload the configuration
     public func loadConfig() {
+        Logger.info("Loading configuration", category: .config)
+
         do {
             // Create default config if needed
-            try configManager.createDefaultConfigIfNeeded()
+            let created = try configManager.createDefaultConfigIfNeeded()
+            if created {
+                Logger.info("Created default configuration file", category: .config)
+            }
 
             // Load config
             let config = try configManager.loadConfig()
@@ -107,6 +125,9 @@ public final class OrbitAppState: ObservableObject {
             shortcuts = config.shortcuts
             ruleCount = config.rules.count
             configError = nil
+            lastError = nil
+
+            Logger.info("Configuration loaded successfully with \(config.rules.count) rules", category: .config)
 
             // Note: WindowMonitor can filter by bundle ID, but our rules use app names
             // which match against both name and bundleID in WindowMatcher.
@@ -114,9 +135,12 @@ public final class OrbitAppState: ObservableObject {
             windowMonitor.monitoredBundleIDs = nil
 
         } catch let error as ConfigError {
-            configError = describeConfigError(error)
+            let errorMessage = describeConfigError(error)
+            configError = errorMessage
+            Logger.error("Config error: \(errorMessage)", category: .config)
         } catch {
             configError = error.localizedDescription
+            Logger.error("Config error: \(error.localizedDescription)", category: .config)
         }
     }
 
@@ -124,8 +148,10 @@ public final class OrbitAppState: ObservableObject {
     public func togglePause() {
         isPaused.toggle()
         if isPaused {
+            Logger.info("Window monitoring paused", category: .monitor)
             windowMonitor.stopMonitoring()
         } else if hasAccessibility {
+            Logger.info("Window monitoring resumed", category: .monitor)
             startMonitoring()
         }
     }
@@ -160,6 +186,7 @@ public final class OrbitAppState: ObservableObject {
     // MARK: - Private Methods
 
     private func startMonitoring() {
+        Logger.info("Starting window monitoring", category: .monitor)
         windowMonitor.delegate = self
         do {
             try windowMonitor.startMonitoring()
@@ -167,12 +194,15 @@ public final class OrbitAppState: ObservableObject {
 
             // Scan existing windows and process them
             let existingWindows = windowMonitor.scanExistingWindows()
+            Logger.debug("Scanning \(existingWindows.count) existing windows", category: .monitor)
             for windowInfo in existingWindows {
                 processWindow(windowInfo)
             }
         } catch {
             // Accessibility error - update state
+            Logger.error("Failed to start monitoring: \(error.localizedDescription)", category: .monitor)
             hasAccessibility = false
+            lastError = "Failed to start monitoring: \(error.localizedDescription)"
         }
     }
 
@@ -180,29 +210,45 @@ public final class OrbitAppState: ObservableObject {
         guard !isPaused else { return }
         guard let matcher = windowMatcher else { return }
 
+        Logger.debug("New window: \(windowInfo.appName) - \(windowInfo.title)", category: .monitor)
+
         if let result = matcher.match(windowInfo: windowInfo) {
             let currentSpace = spaceTracker.currentSpaceIndex
             let targetSpace = result.targetSpace
 
+            Logger.info(
+                "Matched window '\(windowInfo.title)' from \(windowInfo.appName) to space \(targetSpace)",
+                category: .movement
+            )
+
             // Only move if not already on target space
-            guard currentSpace != targetSpace else { return }
+            guard currentSpace != targetSpace else {
+                Logger.debug("Window already on target space \(targetSpace)", category: .movement)
+                return
+            }
 
             // Get shortcut for target space
             guard let shortcutString = shortcuts.shortcut(forSpace: targetSpace),
                   let shortcut = KeyboardShortcut.parse(shortcutString) else {
                 // No shortcut configured for target space - try relative movement
                 // For now, skip if no direct shortcut (relative movement is more complex)
+                Logger.warning(
+                    "No shortcut configured for space \(targetSpace), skipping move",
+                    category: .movement
+                )
                 return
             }
 
-            // Perform the move
+            // Perform the move with retry for transient failures
             do {
-                try spaceMover.moveWindow(
-                    windowInfo.windowElement,
-                    toSpace: targetSpace,
-                    fromSpace: currentSpace,
-                    using: shortcut
-                )
+                try retryHandler.execute {
+                    try spaceMover.moveWindow(
+                        windowInfo.windowElement,
+                        toSpace: targetSpace,
+                        fromSpace: currentSpace,
+                        using: shortcut
+                    )
+                }
 
                 // Record successful move
                 addRecentMove(
@@ -210,9 +256,15 @@ public final class OrbitAppState: ObservableObject {
                     title: windowInfo.title,
                     space: targetSpace
                 )
+                Logger.info(
+                    "Successfully moved '\(windowInfo.title)' to space \(targetSpace)",
+                    category: .movement
+                )
             } catch {
-                // Move failed - log but don't crash
-                // TODO: Add proper logging
+                // Move failed after retries
+                let errorMessage = "Failed to move '\(windowInfo.title)': \(error.localizedDescription)"
+                Logger.error(errorMessage, category: .movement)
+                lastError = errorMessage
             }
         }
     }
@@ -253,10 +305,10 @@ extension OrbitAppState: WindowMonitorDelegate {
     }
 
     nonisolated public func windowMonitor(_ monitor: WindowMonitor, didDetectAppLaunch bundleID: String, appName: String) {
-        // Could log this for debugging
+        Logger.debug("App launched: \(appName) (\(bundleID))", category: .monitor)
     }
 
     nonisolated public func windowMonitor(_ monitor: WindowMonitor, didDetectAppTermination bundleID: String) {
-        // Could log this for debugging
+        Logger.debug("App terminated: \(bundleID)", category: .monitor)
     }
 }
