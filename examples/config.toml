@@ -6,6 +6,14 @@
 # Dock → right-click app → Options → Assign to This Desktop
 
 # ─────────────────────────────────────────────────────────
+# Settings
+# ─────────────────────────────────────────────────────────
+
+[settings]
+# Log level: error, warning, info, debug
+log_level = "info"
+
+# ─────────────────────────────────────────────────────────
 # Keyboard Shortcuts
 # ─────────────────────────────────────────────────────────
 # These must match your macOS settings:

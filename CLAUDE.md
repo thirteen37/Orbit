@@ -490,7 +490,52 @@ On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` w
 2. **Timing sensitive** - Needs delays for space switch animations (~300ms per space)
 3. **Space count unknown** - Can't detect total number of spaces
 4. **Sequoia re-auth** - User must re-grant Accessibility permission monthly
-5. **Edge cases** - Full-screen windows, minimized windows may not work
+
+### v1 Scope Limitations
+
+| Scenario | v1 Support |
+|----------|------------|
+| Multiple monitors | Not supported — single monitor only for v1 |
+| Full-screen apps | Not supported — cannot move full-screen windows |
+| Minimized windows | Not supported — cannot move minimized windows |
+| Target space > actual count | Log warning, skip move |
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Accessibility permission denied | Show alert with button to open System Settings; disable watching until granted |
+| Config file malformed | Show error in status line; log details; continue with last valid config |
+| Target space doesn't exist | Log warning; skip the move; don't crash |
+| Move fails (window busy) | Log warning; retry once after delay; then skip |
+
+## Logging
+
+- **Location:** `~/Library/Logs/Orbit/orbit.log`
+- **Rotation:** Keep last 5 MB, rotate when exceeded
+- **Levels:** error, warning, info, debug
+- **Default:** info (configurable via `log_level` in config.toml)
+
+```toml
+# In config.toml
+[settings]
+log_level = "info"  # error, warning, info, debug
+```
+
+## Config Auto-Reload
+
+- Watch `~/.config/orbit/config.toml` for changes using FSEvents
+- Debounce: wait 500ms after last change before reloading
+- On reload: validate config first
+  - If valid: apply new config, update status
+  - If invalid: show error in status, log details, keep previous valid config
+
+## Menubar Icon
+
+- Use SF Symbol: `circle.grid.2x2` or similar orbit/grid glyph
+- **Watching state:** Filled icon
+- **Paused state:** Outline icon
+- **Error state:** Icon with warning badge or different color
 
 ## Implementation Order
 
