@@ -4,6 +4,82 @@
 
 Orbit is a macOS menubar utility that automatically assigns windows to specific Spaces based on configurable rules. It solves the problem of managing multiple windows from the same app (e.g., Chrome work profile vs personal profile) that need to live on different Spaces.
 
+## Development Process
+
+### Git Workflow
+
+**Always use git worktrees for feature development.** Multiple agents may work concurrently, and worktrees prevent conflicts.
+
+```bash
+# Create a worktree for a new feature
+git worktree add ../Orbit-feature-name -b feature/feature-name
+
+# Work in the worktree directory
+cd ../Orbit-feature-name
+
+# When complete, merge back to main
+cd ../Orbit
+git merge feature/feature-name
+
+# Clean up
+git worktree remove ../Orbit-feature-name
+git branch -d feature/feature-name
+```
+
+**Branch rules:**
+- **Never work directly on `main`** without explicit approval
+- `main` must always be clean and working
+- Create feature branches for all work: `feature/space-mover`, `feature/window-monitor`, etc.
+- Merge only after tests pass
+
+### Testing Requirements
+
+Include relevant tests with each major feature:
+- **Unit tests** - Test individual functions/methods in isolation
+- **Integration tests** - Test component interactions
+- **UI tests** - Test menubar interactions (when applicable)
+
+**Rules:**
+- Tests must pass before committing/merging
+- Tests should be meaningful — don't write excessive useless tests
+- Test edge cases and error conditions, not just happy paths
+- Each test should verify one specific behavior
+
+```bash
+# Run tests before any merge
+swift test
+```
+
+### Code Quality
+
+**Commit guidelines:**
+- Commits should be meaningful in size and content
+- Each commit should represent a logical unit of work
+- Write clear commit messages explaining "why", not just "what"
+
+**Refactoring:**
+- Refactor often to keep the codebase clean
+- Remove dead code immediately — don't leave it commented out
+- Remove unused parameters, variables, and imports
+- Keep functions focused and small
+
+**Documentation:**
+- Keep documentation up to date with code changes
+- Update CLAUDE.md when architecture changes
+- Update README.md when user-facing behavior changes
+- Document non-obvious code with comments
+
+### Code Review Checklist
+
+Before merging any feature:
+- [ ] All tests pass (`swift test`)
+- [ ] No dead code or unused variables
+- [ ] Documentation updated if needed
+- [ ] Commit messages are meaningful
+- [ ] Code follows existing patterns in the codebase
+
+---
+
 ## Technical Background
 
 ### Why This Is Hard
@@ -145,12 +221,31 @@ Add to `Package.swift`:
 
 ## Testing
 
+### Automated Tests
+
+Tests live in `Tests/OrbitTests/`. Run with:
+
+```bash
+swift test
+```
+
+**Test structure:**
+- `SpaceMoverTests.swift` - CGEvent generation, coordinate calculations
+- `WindowMatcherTests.swift` - Rule matching logic, regex patterns
+- `ConfigManagerTests.swift` - TOML parsing, rule validation
+- `SpaceTrackerTests.swift` - Space tracking state
+
+### Manual Integration Tests
+
+Some behaviors require manual verification:
+
 1. Create 3 spaces manually in Mission Control
 2. Configure rule: Chrome "Work" → Space 2
 3. Open Chrome, create new window with Work profile
 4. Verify window moves to Space 2
 5. Quit Chrome, reopen
 6. Verify new window goes to Space 2 again
+7. Manually move window to Space 3 — verify Orbit doesn't move it back
 
 ## References
 
