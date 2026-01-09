@@ -80,6 +80,11 @@ struct MenuBarView: View {
                 appState.openConfig()
             }
             .keyboardShortcut(",", modifiers: .command)
+
+            Button("Open Log...") {
+                appState.openLog()
+            }
+            .keyboardShortcut("l", modifiers: [.command, .option])
         }
     }
 
