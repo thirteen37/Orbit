@@ -1,0 +1,19 @@
+name: Setup Swift
+description: Configure Xcode and cache SPM dependencies
+
+runs:
+  using: composite
+  steps:
+    - name: Select Xcode 16.2
+      shell: bash
+      run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+    - name: Cache SPM
+      uses: actions/cache@v4
+      with:
+        path: |
+          .build
+          .swiftpm
+        key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
+        restore-keys: |
+          spm-${{ runner.os }}-

@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/setup-swift
+
       - name: Build app bundle
         run: ./scripts/build-app.sh
 
