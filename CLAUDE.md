@@ -534,7 +534,7 @@ On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` w
 │ Reload Config               │  ← Re-read config.toml
 │ Open Config...              │  ← Opens in default editor
 ├─────────────────────────────┤
-│ Recent Activity         ▶   │  ← Submenu with last ~5 moves
+│ Recent Activity         ▶   │  ← Submenu with last 3 moves
 │   Chrome "Work" → Space 1   │
 │   Terminal "dev" → Space 3  │
 ├─────────────────────────────┤
@@ -551,7 +551,7 @@ On first run, if no config exists, Orbit creates `~/.config/orbit/config.toml` w
 | Pause/Resume | Temporarily stop watching without quitting |
 | Reload Config | Re-read TOML without restart |
 | Open Config... | Opens config file in default editor |
-| Recent Activity | Submenu showing last ~5 window moves |
+| Recent Activity | Submenu showing last 3 window moves |
 | Start at Login | Toggle LaunchAgent on/off |
 | About | Version info |
 | Quit | Exit app |

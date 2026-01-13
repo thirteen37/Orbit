@@ -121,7 +121,7 @@ Orbit appears in your menubar with the following menu:
 | Pause/Resume | Temporarily stop watching without quitting |
 | Reload Config | Re-read config.toml without restart |
 | Open Config... | Opens config file in your default editor |
-| Recent Activity | Submenu showing last 5 window moves |
+| Recent Activity | Submenu showing last 3 window moves |
 | Start at Login | Toggle automatic startup via LaunchAgent |
 | About Orbit | Version information |
 | Quit | Exit the application |

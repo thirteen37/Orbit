@@ -89,21 +89,11 @@ struct MenuBarView: View {
     }
 
     private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Recent Activity")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-
-            ForEach(appState.recentMoves.prefix(5)) { move in
+        Menu("Recent Activity") {
+            ForEach(appState.recentMoves.prefix(3)) { move in
                 Text("\(move.appName) → Space \(move.targetSpace)")
-                    .font(.caption)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 2)
             }
         }
-        .padding(.bottom, 8)
     }
 
     private var footerSection: some View {
