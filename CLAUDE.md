@@ -6,13 +6,7 @@
 
 **STOP. Before writing any code, creating any files, or making any modifications:**
 
-1. **Check which branch you're on:** `git branch --show-current`
-2. **If you're on `main`, you MUST create a worktree first:**
-   ```bash
-   git worktree add ../Orbit-feature-name -b feature/feature-name
-   cd ../Orbit-feature-name
-   ```
-3. **Only then** proceed with your work
+Use the `workbranch` skill to manage the git worktrees.
 
 **Why this matters:** Multiple agents may work concurrently. Working directly on `main` causes conflicts and breaks the shared codebase. The `main` branch must always be clean and deployable.
 
@@ -33,48 +27,12 @@ Orbit is a macOS menubar utility that automatically assigns windows to specific 
 
 ### Git Workflow
 
-**Always use git worktrees for feature development.** Multiple agents may work concurrently, and worktrees prevent conflicts.
-
-#### Pre-Flight Checklist (REQUIRED before any code changes)
-
-```bash
-# 1. Verify you're not on main
-git branch --show-current
-# If this shows "main", STOP and create a worktree
-
-# 2. Check for existing worktrees you might resume
-git worktree list
-
-# 3. Create a new worktree OR cd into existing one
-git worktree add ../Orbit-feature-name -b feature/feature-name
-cd ../Orbit-feature-name
-
-# 4. Verify you're in the worktree
-pwd  # Should show ../Orbit-feature-name, NOT ../Orbit
-```
-
-#### Standard Workflow
-
-```bash
-# Create a worktree for a new feature
-git worktree add ../Orbit-feature-name -b feature/feature-name
-
-# Work in the worktree directory
-cd ../Orbit-feature-name
-
-# When complete, merge back to main
-cd ../Orbit
-git merge feature/feature-name
-
-# Clean up
-git worktree remove ../Orbit-feature-name
-git branch -d feature/feature-name
-```
+**Always use the workbranch skill for feature development.** Multiple agents may work concurrently, and workbranch prevent conflicts.
 
 **Branch rules:**
 - **NEVER work directly on `main`** — this is non-negotiable
 - `main` must always be clean and working
-- Create feature branches for all work: `feature/space-mover`, `feature/window-monitor`, etc.
+- Use the workbranch skill to create feature branches for all work: `feature/space-mover`, `feature/window-monitor`, etc.
 - Merge only after tests pass
 
 ### Multi-Agent Coordination
@@ -91,56 +49,10 @@ Multiple agents may work concurrently on different features. Each agent works in
 
 **No separate handoff files.** Git history serves as the handoff mechanism.
 
-**Starting a session:**
-```bash
-# 1. Check TODO.md on main for available work
-git show main:TODO.md
-
-# 2. Create worktree for your feature
-git worktree add ../Orbit-feature-name -b feature/feature-name
-
-# 3. Read recent commits if resuming existing branch
-git log --oneline -10
-```
-
 **During work:**
 - Commit frequently with meaningful messages
 - Each commit should be a resumable checkpoint
 - Message format for WIP: `WIP: completed X, next step Y`
-
-**Ending a session (incomplete work):**
-```bash
-# Commit current state with clear next-step message
-git add -A
-git commit -m "WIP: implemented basic rule matching
-
-Done:
-- Rule struct with app/title matching
-- TOML parsing for rules array
-
-Next:
-- Add regex support for title_pattern
-- Write unit tests for edge cases"
-```
-
-**Resuming someone else's work:**
-```bash
-# Read recent commits to understand state
-git log --oneline -10
-git log -1  # Full message of last commit
-
-# Look at current code
-# Continue from where they left off
-```
-
-**Completing a feature:**
-```bash
-# 1. Ensure all tests pass
-swift test
-
-# 2. Update TODO.md to mark feature complete
-# 3. Request merge to main (requires approval)
-```
 
 **Conflict avoidance:**
 - Agents work in separate worktrees — no file conflicts during development
@@ -149,25 +61,6 @@ swift test
 
 ### Cleanup and Rollbacks
 
-**Worktree cleanup (after successful merge):**
-```bash
-# 1. Merge the feature (from main worktree)
-cd ~/Documents/Orbit
-git merge feature/feature-name
-
-# 2. Remove the worktree from filesystem
-git worktree remove ../Orbit-feature-name
-
-# 3. Delete the branch
-git branch -d feature/feature-name
-
-# 4. Verify cleanup
-git worktree list   # Should not show the removed worktree
-git branch          # Should not show the deleted branch
-```
-
-**All three steps are required.** Don't leave orphaned worktrees or branches.
-
 **When to abandon and start fresh:**
 
 If you find yourself:
@@ -175,18 +68,9 @@ If you find yourself:
 - Fighting the compiler with no progress for 10+ attempts
 - Realizing the approach is fundamentally flawed
 
-**Don't keep digging.** Instead:
+**Don't keep digging.** Instead delete the workbranch and start a fresh new one.
 
-```bash
-# 1. Abandon the broken worktree
-git worktree remove --force ../Orbit-feature-name
-git branch -D feature/feature-name  # Force delete
-
-# 2. Create a docs branch to record what didn't work
-git worktree add ../Orbit-docs -b docs/learnings-update
-cd ../Orbit-docs
-
-# 3. Update CLAUDE.md "Lessons Learned" section with what failed
+# Update CLAUDE.md "Lessons Learned" section with what failed
 # Edit the file, then commit
 
 git add CLAUDE.md
@@ -195,15 +79,7 @@ git commit -m "docs: document failed approach for feature-name
 Tried X approach, failed because Y.
 See Lessons Learned section for details."
 
-# 4. Merge docs branch to main (request approval if needed)
-cd ~/Documents/Orbit
-git merge docs/learnings-update
-git worktree remove ../Orbit-docs
-git branch -d docs/learnings-update
-
-# 5. Start fresh with a new approach
-git worktree add ../Orbit-feature-name-v2 -b feature/feature-name-v2
-```
+# Start fresh with a new approach
 
 **Document failed approaches** in this file under "Lessons Learned" so future agents don't repeat the same mistakes. Always use a branch — never commit directly to main.
 
@@ -269,12 +145,7 @@ Before merging any feature:
 
 ### Agentic Development Guidelines
 
-**First thing every session — verify your branch:**
-```bash
-git branch --show-current  # Must NOT be "main"
-pwd                        # Must be a worktree, not ~/Documents/Orbit
-```
-If either check fails, create a worktree before doing anything else. See "Pre-Flight Checklist" above.
+**Before changing anything: use the workbranch skill**
 
 **Build incrementally:**
 - Build after writing each component — don't write 500 lines then discover it doesn't compile
@@ -288,7 +159,7 @@ If either check fails, create a worktree before doing anything else. See "Pre-Fl
 - Don't assume permissions are granted — check
 
 **When to stop and ask (requires human approval):**
-- **Any work directly on `main` branch** — always use worktrees
+- **Any work directly on `main` branch** — always use the workbranch skill
 - Architectural changes not in the plan
 - Adding obscure dependencies (see dependency policy below)
 - Changing public APIs or config format
