@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SVG_SOURCE="${PROJECT_DIR}/appicon-draft-v1.svg"
+SVG_SOURCE="${PROJECT_DIR}/Resources/icons-source/app-icon.svg"
 ICONSET_DIR="${PROJECT_DIR}/build/AppIcon.iconset"
 OUTPUT_ICNS="${PROJECT_DIR}/Resources/AppIcon.icns"
 
