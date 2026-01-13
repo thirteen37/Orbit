@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Full color app icon - Space theme with glowing star -->
+
+  <!-- Background - dark space gradient -->
+  <defs>
+    <radialGradient id="spaceGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </radialGradient>
+    <radialGradient id="starGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#fff3b0"/>
+      <stop offset="60%" stop-color="#ffaa00"/>
+      <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="planetGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#64b5f6"/>
+      <stop offset="100%" stop-color="#1565c0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#spaceGrad)"/>
+
+  <!-- Subtle stars in background -->
+  <circle cx="100" cy="120" r="2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="420" cy="100" r="1.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="80" cy="380" r="1.5" fill="#ffffff" opacity="0.4"/>
+  <circle cx="440" cy="420" r="2" fill="#ffffff" opacity="0.5"/>
+  <circle cx="150" cy="440" r="1" fill="#ffffff" opacity="0.3"/>
+  <circle cx="380" cy="150" r="1" fill="#ffffff" opacity="0.4"/>
+
+  <!-- Orbital ring -->
+  <circle cx="256" cy="256" r="140"
+          fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.3"/>
+
+  <!-- Star glow effect -->
+  <circle cx="256" cy="256" r="100" fill="url(#starGlow)"/>
+
+  <!-- Central star (bright core) -->
+  <circle cx="256" cy="256" r="50" fill="#ffffff"/>
+
+  <!-- Orbiting planet -->
+  <circle cx="396" cy="256" r="36" fill="url(#planetGrad)"/>
+  <!-- Planet highlight -->
+  <ellipse cx="384" cy="244" rx="12" ry="8" fill="#ffffff" opacity="0.4"/>
+</svg>

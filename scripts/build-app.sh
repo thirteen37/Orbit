@@ -36,6 +36,8 @@ cat > "${APP_DIR}/Contents/Info.plist" << 'EOF'
     <string>Orbit</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
@@ -52,6 +54,19 @@ EOF
 
 # Create PkgInfo
 echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
+
+# Copy app icon if it exists
+ICON_PATH="Resources/AppIcon.icns"
+if [ -f "$ICON_PATH" ]; then
+    echo "Copying app icon..."
+    cp "$ICON_PATH" "${APP_DIR}/Contents/Resources/"
+fi
+
+# Copy menubar icon if it exists
+if [ -f "Resources/menubar-icon.png" ]; then
+    echo "Copying menubar icon..."
+    cp Resources/menubar-icon*.png "${APP_DIR}/Contents/Resources/"
+fi
 
 echo ""
 echo "Done! App bundle created at: ${APP_DIR}"

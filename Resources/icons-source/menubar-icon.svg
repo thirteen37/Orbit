@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple sun + planet version - most readable at tiny sizes -->
+
+  <!-- Orbital ring -->
+  <circle cx="64" cy="64" r="42"
+          fill="none" stroke="#000000" stroke-width="4"/>
+
+  <!-- Central sun (simple filled circle) -->
+  <circle cx="64" cy="64" r="20" fill="#000000"/>
+
+  <!-- Orbiting planet -->
+  <circle cx="106" cy="64" r="10" fill="#000000"/>
+</svg>
