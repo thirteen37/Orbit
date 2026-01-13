@@ -97,16 +97,10 @@ struct MenuBarView: View {
                 .padding(.top, 8)
 
             ForEach(appState.recentMoves.prefix(5)) { move in
-                HStack {
-                    Text(move.appName)
-                        .fontWeight(.medium)
-                    Text("->")
-                        .foregroundColor(.secondary)
-                    Text("Space \(move.targetSpace)")
-                }
-                .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 2)
+                Text("\(move.appName) → Space \(move.targetSpace)")
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 2)
             }
         }
         .padding(.bottom, 8)
