@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app bundle
+        run: ./scripts/build-app.sh
+
+      - name: Create zip for release
+        run: |
+          cd build
+          zip -r Orbit.zip Orbit.app
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Orbit.zip
