@@ -51,14 +51,25 @@ public final class OrbitAppState: ObservableObject {
     /// Last error that occurred during operation (for UI display)
     @Published public var lastError: String? = nil
 
+    // MARK: - Computed Properties
+
+    /// Current configuration for settings editing
+    public var currentConfig: OrbitConfig {
+        configManager.config ?? OrbitConfig()
+    }
+
     // MARK: - Components
 
-    private let configManager: ConfigManager
+    /// The configuration manager (exposed for Settings UI)
+    public let configManager: ConfigManager
     private let windowMonitor: WindowMonitor
     private var windowMatcher: WindowMatcher?
     private let spaceTracker: SpaceTracker
     private let spaceMover: SpaceMover
     private var shortcuts: Shortcuts = Shortcuts()
+
+    /// Launch agent manager for start-at-login functionality
+    public let launchAgent = LaunchAgent()
 
     /// Retry handler for transient failures
     private let retryHandler = RetryHandler(maxAttempts: 2, delayBetweenAttempts: 0.3)

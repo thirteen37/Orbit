@@ -243,10 +243,20 @@ open build/Orbit.app
 Orbit/
 ├── Sources/Orbit/
 │   ├── main.swift              # Entry point only
-│   ├── OrbitApp.swift          # App definition
+│   ├── OrbitApp.swift          # App definition with MenuBarExtra and Settings window
 │   ├── Core/                   # Business logic
 │   ├── Config/                 # Configuration handling
-│   └── UI/                     # SwiftUI views
+│   └── UI/
+│       ├── MenuBarView.swift   # Menubar dropdown menu
+│       ├── OrbitAppState.swift # Central state management
+│       ├── OrbitIcon.swift     # Menubar icon
+│       └── Settings/           # Settings window components
+│           ├── SettingsView.swift          # Main settings window with tabs
+│           ├── SettingsViewModel.swift     # View model for editing state
+│           ├── GeneralSettingsTab.swift    # Log level, launch at login
+│           ├── ShortcutsSettingsTab.swift  # Keyboard shortcuts config
+│           ├── RulesSettingsTab.swift      # Rules list with CRUD
+│           └── RuleEditorSheet.swift       # Add/edit rule modal
 ├── Tests/OrbitTests/           # All tests here
 ├── examples/                   # Example configs
 ├── CLAUDE.md                   # This file (agent guidance)
@@ -303,17 +313,28 @@ This works without SIP disabled because we're simulating user input, not calling
 ```
 Sources/Orbit/
 ├── main.swift                    # Entry point
-├── OrbitApp.swift                # SwiftUI App definition, menubar
+├── OrbitApp.swift                # SwiftUI App definition, menubar + settings window
 ├── Core/
 │   ├── SpaceMover.swift          # CGEvent-based window movement
 │   ├── SpaceTracker.swift        # Track current space number
 │   ├── WindowMonitor.swift       # AXObserver for window creation
-│   └── WindowMatcher.swift       # Rule matching logic
+│   ├── WindowMatcher.swift       # Rule matching logic
+│   ├── LaunchAgent.swift         # LaunchAgent for auto-start
+│   └── Logger.swift              # Unified logging
 ├── Config/
 │   ├── Rule.swift                # Rule model
-│   └── ConfigManager.swift       # TOML config loading
+│   └── ConfigManager.swift       # TOML config loading and saving
 └── UI/
-    └── MenuBarView.swift         # Menubar interface
+    ├── MenuBarView.swift         # Menubar dropdown interface
+    ├── OrbitAppState.swift       # Central state management
+    ├── OrbitIcon.swift           # Menubar icon rendering
+    └── Settings/                 # Settings window
+        ├── SettingsView.swift          # Main tabbed settings window
+        ├── SettingsViewModel.swift     # Editing state and validation
+        ├── GeneralSettingsTab.swift    # General settings (log level, login)
+        ├── ShortcutsSettingsTab.swift  # Keyboard shortcuts editor
+        ├── RulesSettingsTab.swift      # Rules list with CRUD
+        └── RuleEditorSheet.swift       # Add/edit rule modal sheet
 ```
 
 ## Key Components
@@ -340,9 +361,16 @@ Core movement logic using CGEvents:
 - May use `CGSGetActiveSpace()` private API for reads (allowed without SIP)
 
 ### ConfigManager.swift
-- Load rules from `~/.config/orbit/rules.toml`
-- Watch for config changes and reload
+- Load rules from `~/.config/orbit/config.toml`
+- Save config changes back to TOML (used by Settings window)
+- Watch for config changes and reload automatically
 - Parse TOML using TOMLKit dependency
+
+### SettingsViewModel.swift
+- Manages working copy of config for editing
+- Tracks unsaved changes for UI feedback
+- Validates settings before save (log level, rule validity)
+- Provides CRUD operations for rules
 
 ## Configuration Format
 

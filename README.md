@@ -120,11 +120,44 @@ Orbit appears in your menubar with the following menu:
 | Status line | Shows rule count or error state |
 | Pause/Resume | Temporarily stop watching without quitting |
 | Reload Config | Re-read config.toml without restart |
-| Open Config... | Opens config file in your default editor |
+| **Settings...** | Open the visual settings window (Cmd+,) |
+| Open Config... | Opens config file in your default editor (Cmd+Shift+,) |
 | Recent Activity | Submenu showing last 3 window moves |
-| Start at Login | Toggle automatic startup via LaunchAgent |
 | About Orbit | Version information |
 | Quit | Exit the application |
+
+## Settings Window
+
+The Settings window provides a visual interface for configuring Orbit. Open it from the menubar menu or press Cmd+,.
+
+### General Tab
+
+- **Launch at Login** - Toggle automatic startup via LaunchAgent
+- **Log Level** - Set logging verbosity (error, warning, info, debug)
+
+### Shortcuts Tab
+
+Configure keyboard shortcuts for switching spaces. These must match your system shortcuts in:
+**System Settings > Keyboard > Keyboard Shortcuts > Mission Control**
+
+- **Direct Jumps** - Shortcuts for spaces 1-9 (e.g., ctrl+1, ctrl+2)
+- **Relative Movement** - Shortcuts for moving left/right (e.g., ctrl+left, ctrl+right)
+
+### Rules Tab
+
+Create and manage window-to-space rules visually:
+
+- **Add** - Click + to create a new rule
+- **Edit** - Select a rule and click Edit to modify it
+- **Delete** - Select a rule and click - to remove it
+- **Reorder** - Drag and drop rules to change their priority (first match wins)
+
+For each rule, you can specify:
+- **Application** - Name or bundle ID of the app
+- **Title Matching** - Match any title, substring, or regex pattern
+- **Target Space** - Which space (1-9) to move matching windows to
+
+Click **Save** to write changes to config.toml. Click **Revert** to discard changes.
 
 ### Icon States
 

@@ -6,6 +6,7 @@ import SwiftUI
 /// The main menubar dropdown view for Orbit
 struct MenuBarView: View {
     @ObservedObject var appState: OrbitAppState
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -76,10 +77,18 @@ struct MenuBarView: View {
             }
             .keyboardShortcut("r", modifiers: .command)
 
+            Divider()
+
+            Button("Settings...") {
+                openWindow(id: "settings")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            .keyboardShortcut(",", modifiers: .command)
+
             Button("Open Config...") {
                 appState.openConfig()
             }
-            .keyboardShortcut(",", modifiers: .command)
+            .keyboardShortcut(",", modifiers: [.command, .shift])
 
             Button("Open Log...") {
                 appState.openLog()

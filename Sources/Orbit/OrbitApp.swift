@@ -8,10 +8,18 @@ struct OrbitApp: App {
     @StateObject private var appState = OrbitAppState()
 
     var body: some Scene {
+        // Menubar dropdown
         MenuBarExtra {
             MenuBarView(appState: appState)
         } label: {
             OrbitIcon(isActive: !appState.isPaused)
         }
+
+        // Settings window (opened via openWindow)
+        Window("Orbit Settings", id: "settings") {
+            SettingsView(appState: appState)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 }

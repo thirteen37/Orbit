@@ -508,6 +508,318 @@ struct TOMLParsingTests {
     }
 }
 
+// MARK: - Config Save Tests
+
+@Suite("ConfigManager Save Tests")
+struct ConfigManagerSaveTests {
+
+    @Test("saveConfig writes valid TOML that can be reloaded")
+    func saveConfigRoundTrip() throws {
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+
+        let manager = ConfigManager(configPath: tempPath)
+
+        let config = OrbitConfig(
+            settings: Settings(logLevel: "debug"),
+            shortcuts: Shortcuts(
+                directJumps: [1: "ctrl+1", 2: "ctrl+2", 5: "ctrl+5"],
+                spaceLeft: "ctrl+left",
+                spaceRight: "ctrl+right"
+            ),
+            rules: [
+                Rule(app: "Safari", titleContains: "Work", space: 1),
+                Rule(app: "Terminal", titlePattern: "^dev-.*", space: 2),
+                Rule(app: "Chrome", space: 3)
+            ]
+        )
+
+        // Save config
+        try manager.saveConfig(config)
+
+        // Verify file exists
+        #expect(FileManager.default.fileExists(atPath: tempPath))
+
+        // Reload and verify
+        let reloaded = try manager.loadConfig()
+        #expect(reloaded.settings.logLevel == "debug")
+        #expect(reloaded.shortcuts.directJumps[1] == "ctrl+1")
+        #expect(reloaded.shortcuts.directJumps[2] == "ctrl+2")
+        #expect(reloaded.shortcuts.directJumps[5] == "ctrl+5")
+        #expect(reloaded.shortcuts.spaceLeft == "ctrl+left")
+        #expect(reloaded.shortcuts.spaceRight == "ctrl+right")
+        #expect(reloaded.rules.count == 3)
+        #expect(reloaded.rules[0].app == "Safari")
+        #expect(reloaded.rules[0].titleContains == "Work")
+        #expect(reloaded.rules[1].app == "Terminal")
+        #expect(reloaded.rules[1].titlePattern == "^dev-.*")
+        #expect(reloaded.rules[2].app == "Chrome")
+        #expect(reloaded.rules[2].titleContains == nil)
+
+        // Cleanup
+        try? FileManager.default.removeItem(atPath: tempPath)
+    }
+
+    @Test("saveConfig creates directory if needed")
+    func saveConfigCreatesDirectory() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/nested/deep")
+        let tempPath = tempDir.appendingPathComponent("config.toml").path
+
+        let manager = ConfigManager(configPath: tempPath)
+        let config = OrbitConfig()
+
+        try manager.saveConfig(config)
+
+        #expect(FileManager.default.fileExists(atPath: tempPath))
+
+        // Cleanup
+        try? FileManager.default.removeItem(at: tempDir.deletingLastPathComponent().deletingLastPathComponent())
+    }
+
+    @Test("saveConfig validates rules before saving")
+    func saveConfigValidatesRules() throws {
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+
+        let manager = ConfigManager(configPath: tempPath)
+
+        let invalidConfig = OrbitConfig(
+            rules: [Rule(app: "", space: 1)]  // Invalid: empty app
+        )
+
+        do {
+            try manager.saveConfig(invalidConfig)
+            Issue.record("Expected validationError to be thrown")
+        } catch let error as ConfigError {
+            if case .validationError(let message) = error {
+                #expect(message.contains("Rule 1"))
+            } else {
+                Issue.record("Expected validationError, got \(error)")
+            }
+        }
+
+        // File should not exist since save failed
+        #expect(!FileManager.default.fileExists(atPath: tempPath))
+    }
+
+    @Test("saveConfig updates internal state")
+    func saveConfigUpdatesState() throws {
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+
+        let manager = ConfigManager(configPath: tempPath)
+        #expect(manager.config == nil)
+
+        let config = OrbitConfig(settings: Settings(logLevel: "debug"))
+        try manager.saveConfig(config)
+
+        #expect(manager.config != nil)
+        #expect(manager.config?.settings.logLevel == "debug")
+
+        // Cleanup
+        try? FileManager.default.removeItem(atPath: tempPath)
+    }
+
+    @Test("saveConfig preserves empty shortcuts")
+    func saveConfigPreservesEmptyShortcuts() throws {
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+
+        let manager = ConfigManager(configPath: tempPath)
+
+        let config = OrbitConfig(
+            shortcuts: Shortcuts()  // Empty shortcuts
+        )
+
+        try manager.saveConfig(config)
+        let reloaded = try manager.loadConfig()
+
+        #expect(reloaded.shortcuts.directJumps.isEmpty)
+        #expect(reloaded.shortcuts.spaceLeft == nil)
+        #expect(reloaded.shortcuts.spaceRight == nil)
+
+        // Cleanup
+        try? FileManager.default.removeItem(atPath: tempPath)
+    }
+}
+
+// MARK: - SettingsViewModel Tests
+
+@Suite("SettingsViewModel Tests")
+@MainActor
+struct SettingsViewModelTests {
+
+    @Test("Initial state matches config")
+    func initialStateMatchesConfig() async {
+        let config = OrbitConfig(
+            settings: Settings(logLevel: "debug"),
+            shortcuts: Shortcuts(directJumps: [1: "ctrl+1"]),
+            rules: [Rule(app: "Safari", space: 1)]
+        )
+
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        #expect(viewModel.logLevel == "debug")
+        #expect(viewModel.shortcuts.directJumps[1] == "ctrl+1")
+        #expect(viewModel.rules.count == 1)
+        #expect(viewModel.hasUnsavedChanges == false)
+    }
+
+    @Test("Validation catches invalid log level")
+    func validationCatchesInvalidLogLevel() {
+        let config = OrbitConfig()
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+        viewModel.logLevel = "invalid_level"
+
+        let isValid = viewModel.validate()
+
+        #expect(isValid == false)
+        #expect(viewModel.validationErrors.count > 0)
+        #expect(viewModel.validationErrors.first?.contains("invalid_level") == true)
+    }
+
+    @Test("Validation passes for valid settings")
+    func validationPassesForValidSettings() {
+        let config = OrbitConfig(
+            settings: Settings(logLevel: "debug"),
+            rules: [Rule(app: "Safari", space: 1)]
+        )
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        let isValid = viewModel.validate()
+
+        #expect(isValid == true)
+        #expect(viewModel.validationErrors.isEmpty)
+    }
+
+    @Test("Validation catches invalid rules")
+    func validationCatchesInvalidRules() {
+        let config = OrbitConfig()
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+        viewModel.rules = [
+            Rule(app: "Safari", space: 1),
+            Rule(app: "", space: 2)  // Invalid
+        ]
+
+        let isValid = viewModel.validate()
+
+        #expect(isValid == false)
+        #expect(viewModel.validationErrors.count > 0)
+        #expect(viewModel.validationErrors.first?.contains("Rule 2") == true)
+    }
+
+    @Test("addRule increases count")
+    func addRuleIncreasesCount() {
+        let config = OrbitConfig()
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+        let initialCount = viewModel.rules.count
+
+        viewModel.addRule(Rule(app: "Safari", space: 1))
+
+        #expect(viewModel.rules.count == initialCount + 1)
+    }
+
+    @Test("deleteRule removes rule")
+    func deleteRuleRemovesRule() {
+        let config = OrbitConfig(rules: [
+            Rule(app: "Safari", space: 1),
+            Rule(app: "Chrome", space: 2)
+        ])
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        viewModel.deleteRule(at: 0)
+
+        #expect(viewModel.rules.count == 1)
+        #expect(viewModel.rules[0].app == "Chrome")
+    }
+
+    @Test("updateRule replaces rule")
+    func updateRuleReplacesRule() {
+        let config = OrbitConfig(rules: [Rule(app: "Safari", space: 1)])
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        viewModel.updateRule(at: 0, with: Rule(app: "Chrome", space: 2))
+
+        #expect(viewModel.rules[0].app == "Chrome")
+        #expect(viewModel.rules[0].space == 2)
+    }
+
+    @Test("revertChanges restores original values")
+    func revertRestoresOriginalValues() {
+        let config = OrbitConfig(settings: Settings(logLevel: "info"))
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+        viewModel.logLevel = "debug"
+        viewModel.addRule(Rule(app: "Safari", space: 1))
+
+        viewModel.revertChanges()
+
+        #expect(viewModel.logLevel == "info")
+        #expect(viewModel.rules.isEmpty)
+        #expect(viewModel.hasUnsavedChanges == false)
+    }
+
+    @Test("deleteRule at invalid index does nothing")
+    func deleteRuleInvalidIndexNoOp() {
+        let config = OrbitConfig(rules: [Rule(app: "Safari", space: 1)])
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        viewModel.deleteRule(at: 99)
+
+        #expect(viewModel.rules.count == 1)
+    }
+
+    @Test("updateRule at invalid index does nothing")
+    func updateRuleInvalidIndexNoOp() {
+        let config = OrbitConfig(rules: [Rule(app: "Safari", space: 1)])
+        let tempPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString)/config.toml").path
+        let manager = ConfigManager(configPath: tempPath)
+
+        let viewModel = SettingsViewModel(configManager: manager, config: config)
+
+        viewModel.updateRule(at: 99, with: Rule(app: "Chrome", space: 2))
+
+        #expect(viewModel.rules[0].app == "Safari")
+    }
+}
+
 // MARK: - Test Helpers
 
 private final class MockConfigManagerDelegate: ConfigManagerDelegate {
