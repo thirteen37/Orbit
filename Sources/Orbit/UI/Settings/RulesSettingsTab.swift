@@ -54,7 +54,7 @@ struct RulesSettingsTab: View {
                 .padding(8)
                 .background(Color(NSColor.controlBackgroundColor))
             }
-            .frame(minWidth: 250, idealWidth: 300)
+            .frame(minWidth: 200, maxWidth: .infinity)
 
             // Rule detail panel
             if let index = selectedRuleIndex, viewModel.rules.indices.contains(index) {
@@ -62,7 +62,7 @@ struct RulesSettingsTab: View {
                     rule: viewModel.rules[index],
                     onEdit: { editingRuleIndex = index }
                 )
-                .frame(minWidth: 200)
+                .frame(minWidth: 200, maxWidth: .infinity)
             } else {
                 VStack {
                     Spacer()
@@ -70,7 +70,7 @@ struct RulesSettingsTab: View {
                         .foregroundColor(.secondary)
                     Spacer()
                 }
-                .frame(maxWidth: .infinity)
+                .frame(minWidth: 200, maxWidth: .infinity)
             }
         }
         .sheet(isPresented: $isAddingRule) {
