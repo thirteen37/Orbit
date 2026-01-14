@@ -21,8 +21,7 @@ struct ShortcutsSettingsTab: View {
                             .frame(width: 80, alignment: .trailing)
                         TextField("e.g., ctrl+\(space)", text: shortcutBinding(forSpace: space))
                             .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 150)
-                        Spacer()
+                            .frame(minWidth: 120, maxWidth: 200)
                     }
                 }
             }
@@ -33,8 +32,7 @@ struct ShortcutsSettingsTab: View {
                         .frame(width: 80, alignment: .trailing)
                     TextField("e.g., ctrl+left", text: spaceLeftBinding())
                         .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 150)
-                    Spacer()
+                        .frame(minWidth: 120, maxWidth: 200)
                 }
 
                 HStack {
@@ -42,8 +40,7 @@ struct ShortcutsSettingsTab: View {
                         .frame(width: 80, alignment: .trailing)
                     TextField("e.g., ctrl+right", text: spaceRightBinding())
                         .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 150)
-                    Spacer()
+                        .frame(minWidth: 120, maxWidth: 200)
                 }
             }
         }

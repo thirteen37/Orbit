@@ -62,6 +62,7 @@ struct RulesSettingsTab: View {
                     rule: viewModel.rules[index],
                     onEdit: { editingRuleIndex = index }
                 )
+                .frame(minWidth: 200)
             } else {
                 VStack {
                     Spacer()
@@ -147,6 +148,7 @@ struct RuleDetailView: View {
                 GridRow {
                     Text("Application:")
                         .foregroundColor(.secondary)
+                        .frame(minWidth: 100, alignment: .trailing)
                     Text(rule.app)
                 }
 
@@ -154,6 +156,7 @@ struct RuleDetailView: View {
                     GridRow {
                         Text("Title Contains:")
                             .foregroundColor(.secondary)
+                            .frame(minWidth: 100, alignment: .trailing)
                         Text(contains)
                     }
                 }
@@ -162,6 +165,7 @@ struct RuleDetailView: View {
                     GridRow {
                         Text("Title Pattern:")
                             .foregroundColor(.secondary)
+                            .frame(minWidth: 100, alignment: .trailing)
                         Text(pattern)
                             .font(.system(.body, design: .monospaced))
                     }
@@ -171,6 +175,7 @@ struct RuleDetailView: View {
                     GridRow {
                         Text("Title Matching:")
                             .foregroundColor(.secondary)
+                            .frame(minWidth: 100, alignment: .trailing)
                         Text("Any window")
                     }
                 }
@@ -178,6 +183,7 @@ struct RuleDetailView: View {
                 GridRow {
                     Text("Target Space:")
                         .foregroundColor(.secondary)
+                        .frame(minWidth: 100, alignment: .trailing)
                     Text("Space \(rule.space)")
                 }
             }
