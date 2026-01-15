@@ -13,12 +13,16 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0")
+        .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.6.0")
     ],
     targets: [
         .executableTarget(
             name: "Orbit",
-            dependencies: ["TOMLKit"],
+            dependencies: [
+                "TOMLKit",
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources/Orbit"
         ),
         .testTarget(

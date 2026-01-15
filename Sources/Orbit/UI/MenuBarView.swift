@@ -2,11 +2,21 @@
 // Shows status, controls, and recent activity
 
 import SwiftUI
+import Sparkle
 
 /// The main menubar dropdown view for Orbit
 struct MenuBarView: View {
     @ObservedObject var appState: OrbitAppState
+    @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
     @Environment(\.openWindow) private var openWindow
+
+    private let updater: SPUUpdater
+
+    init(appState: OrbitAppState, updater: SPUUpdater) {
+        self.appState = appState
+        self.updater = updater
+        self.checkForUpdatesViewModel = CheckForUpdatesViewModel(updater: updater)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -107,6 +117,11 @@ struct MenuBarView: View {
 
     private var footerSection: some View {
         Group {
+            Button("Check for Updates...") {
+                updater.checkForUpdates()
+            }
+            .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
+
             Button("About Orbit") {
                 showAbout()
             }
@@ -150,9 +165,5 @@ struct MenuBarView: View {
     }
 }
 
-// MARK: - Preview
-
-#Preview {
-    MenuBarView(appState: OrbitAppState())
-        .frame(width: 250)
-}
+// Note: Preview disabled due to Sparkle updater dependency
+// To preview, use the running app or create a mock updater
