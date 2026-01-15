@@ -123,19 +123,30 @@ struct MenuBarView: View {
     // MARK: - Actions
 
     private func showAbout() {
-        // Create and show about panel
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+        let copyright = Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String
+            ?? "Copyright © 2026 Yu-Xi Lim"
+
         let alert = NSAlert()
-        alert.messageText = "Orbit"
+        alert.messageText = "Orbit v\(version)"
         alert.informativeText = """
             Automatic window-to-space management for macOS.
 
             Orbit watches for new windows and automatically moves them to designated Spaces based on your configuration rules.
 
-            https://github.com/user/orbit
+            \(copyright)
+            Licensed under the MIT License.
             """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
-        alert.runModal()
+        alert.addButton(withTitle: "Visit GitHub")
+
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            if let url = URL(string: "https://github.com/thirteen37/Orbit") {
+                NSWorkspace.shared.open(url)
+            }
+        }
     }
 }
 
