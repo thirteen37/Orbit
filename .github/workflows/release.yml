@@ -44,10 +44,14 @@ jobs:
           echo "ZIP_SIZE=$(stat -f%z Orbit.zip)" >> $GITHUB_ENV
 
       - name: Sign Sparkle update
-        if: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "SPARKLE_PRIVATE_KEY not set, skipping signing"
+            exit 0
+          fi
+
           # Get Sparkle tools from SPM build artifacts
           SPARKLE_BIN=".build/artifacts/sparkle/Sparkle/bin"
 
