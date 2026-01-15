@@ -6,6 +6,10 @@ BUNDLE_ID="com.orbit.Orbit"
 BUILD_DIR=".build/release"
 APP_DIR="build/${APP_NAME}.app"
 
+# Sparkle update configuration
+SPARKLE_FEED_URL="${SPARKLE_FEED_URL:-https://thirteen37.github.io/Orbit/appcast.xml}"
+SPARKLE_PUBLIC_KEY="${SPARKLE_PUBLIC_KEY:-}"  # Set via environment variable
+
 # Get version from git tag
 # If HEAD is exactly on a tag: use tag (e.g., "1.0.0")
 # Otherwise: use last tag + "-dev" suffix (e.g., "1.0.0-dev")
@@ -15,7 +19,15 @@ if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
 else
     VERSION="${TAG}-dev"
 fi
+
+# Build number (strip v prefix and replace - with .)
+BUILD_NUMBER=$(echo "$VERSION" | sed 's/^v//' | sed 's/-dev/.0/' | tr -cd '0-9.')
+if [ -z "$BUILD_NUMBER" ]; then
+    BUILD_NUMBER="1"
+fi
+
 echo "Version: ${VERSION}"
+echo "Build number: ${BUILD_NUMBER}"
 
 echo "Building release..."
 swift build -c release
@@ -51,13 +63,27 @@ cat > "${APP_DIR}/Contents/Info.plist" << EOF
     <key>CFBundleShortVersionString</key>
     <string>${VERSION}</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>${BUILD_NUMBER}</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 Yu-Xi Lim. All rights reserved.</string>
+    <key>SUFeedURL</key>
+    <string>${SPARKLE_FEED_URL}</string>
+EOF
+
+# Add Sparkle public key if provided
+if [ -n "$SPARKLE_PUBLIC_KEY" ]; then
+    cat >> "${APP_DIR}/Contents/Info.plist" << EOF
+    <key>SUPublicEDKey</key>
+    <string>${SPARKLE_PUBLIC_KEY}</string>
+EOF
+fi
+
+# Close the plist
+cat >> "${APP_DIR}/Contents/Info.plist" << EOF
 </dict>
 </plist>
 EOF

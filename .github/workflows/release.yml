@@ -12,18 +12,68 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for version detection from tags
 
       - uses: ./.github/actions/setup-swift
 
       - name: Build app bundle
+        env:
+          SPARKLE_PUBLIC_KEY: ${{ secrets.SPARKLE_PUBLIC_KEY }}
         run: ./scripts/build-app.sh
 
       - name: Create zip for release
         run: |
           cd build
           zip -r Orbit.zip Orbit.app
+          echo "ZIP_SIZE=$(stat -f%z Orbit.zip)" >> $GITHUB_ENV
+
+      - name: Sign Sparkle update
+        if: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Get Sparkle tools from SPM build artifacts
+          SPARKLE_BIN=".build/artifacts/sparkle/Sparkle/bin"
+
+          # Create temporary file for private key
+          echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_private_key
+
+          # Sign the release zip
+          SIGNATURE=$($SPARKLE_BIN/sign_update build/Orbit.zip --ed-key-file /tmp/sparkle_private_key)
+
+          # Clean up
+          rm /tmp/sparkle_private_key
+
+          echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+
+      - name: Update appcast
+        if: ${{ env.SPARKLE_SIGNATURE != '' }}
+        run: |
+          # Get version from tag (remove 'v' prefix if present)
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          # Get release notes URL
+          RELEASE_NOTES="https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+
+          # Update appcast
+          python3 scripts/update-appcast.py \
+            --version "$VERSION" \
+            --signature "${{ env.SPARKLE_SIGNATURE }}" \
+            --url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Orbit.zip" \
+            --length "${{ env.ZIP_SIZE }}" \
+            --release-notes "$RELEASE_NOTES"
 
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
           files: build/Orbit.zip
+
+      - name: Deploy appcast to GitHub Pages
+        if: ${{ env.SPARKLE_SIGNATURE != '' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          keep_files: true
