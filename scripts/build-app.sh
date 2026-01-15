@@ -3,9 +3,19 @@ set -e
 
 APP_NAME="Orbit"
 BUNDLE_ID="com.orbit.Orbit"
-VERSION="1.0"
 BUILD_DIR=".build/release"
 APP_DIR="build/${APP_NAME}.app"
+
+# Get version from git tag
+# If HEAD is exactly on a tag: use tag (e.g., "1.0.0")
+# Otherwise: use last tag + "-dev" suffix (e.g., "1.0.0-dev")
+TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+    VERSION=$TAG
+else
+    VERSION="${TAG}-dev"
+fi
+echo "Version: ${VERSION}"
 
 echo "Building release..."
 swift build -c release
@@ -19,7 +29,7 @@ mkdir -p "${APP_DIR}/Contents/Resources"
 cp "${BUILD_DIR}/${APP_NAME}" "${APP_DIR}/Contents/MacOS/"
 
 # Create Info.plist
-cat > "${APP_DIR}/Contents/Info.plist" << 'EOF'
+cat > "${APP_DIR}/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -39,7 +49,7 @@ cat > "${APP_DIR}/Contents/Info.plist" << 'EOF'
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>${VERSION}</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
@@ -47,7 +57,7 @@ cat > "${APP_DIR}/Contents/Info.plist" << 'EOF'
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2026 Lim Yu-Xi. All rights reserved.</string>
+    <string>Copyright © 2026 Yu-Xi Lim. All rights reserved.</string>
 </dict>
 </plist>
 EOF
