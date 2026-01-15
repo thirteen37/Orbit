@@ -28,28 +28,28 @@ This approach works without disabling SIP (System Integrity Protection).
 
 ## Installation
 
+### Homebrew (Recommended)
+
+```bash
+brew tap thirteen37/tap
+brew install --cask orbit
+```
+
 ### Build from Source
 
 ```bash
-git clone https://github.com/user/Orbit.git
+git clone https://github.com/thirteen37/Orbit.git
 cd Orbit
-swift build -c release
+./scripts/build-app.sh
+cp -r build/Orbit.app /Applications/
 ```
-
-The executable will be at `.build/release/Orbit`.
 
 ### First Run
 
-1. Run Orbit - it will appear in your menubar
+1. Open Orbit from Applications - it will appear in your menubar
 2. Grant Accessibility permission when prompted (required for window management)
 3. Edit the config file at `~/.config/orbit/config.toml`
 4. Reload config from the menubar menu
-
-### Optional: Copy to PATH
-
-```bash
-cp .build/release/Orbit /usr/local/bin/
-```
 
 ## Configuration
 
