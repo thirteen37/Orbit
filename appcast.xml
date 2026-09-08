@@ -6,10 +6,10 @@
         <description>Most recent updates to Orbit</description>
         <language>en</language>
         <item>
-            <title>Version 0.2.0</title>
-            <pubDate>Thu, 15 Jan 2026 09:07:39 +0000</pubDate>
-            <sparkle:releaseNotesLink>https://github.com/thirteen37/Orbit/releases/tag/0.2.0</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/thirteen37/Orbit/releases/download/0.2.0/Orbit.zip" length="1057431" type="application/octet-stream" sparkle:version="0.2.0" sparkle:shortVersionString="0.2.0" sparkle:edSignature="sparkle:edSignature=0iA8pvlVgnUgkQVZP/lNLOkbHZLrZ3RcSlkv8ZJJjF01oatGoH62fGiEDkGBY4LRqdyXd4zlQd1ZcgEi2uu3Cg== length=1057431"/>
+            <title>Version 0.2.1</title>
+            <pubDate>Tue, 08 Sep 2026 03:54:31 +0000</pubDate>
+            <sparkle:releaseNotesLink>https://github.com/thirteen37/Orbit/releases/tag/0.2.1</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/thirteen37/Orbit/releases/download/0.2.1/Orbit.zip" length="4101989" type="application/octet-stream" sparkle:version="0.2.1" sparkle:shortVersionString="0.2.1" sparkle:edSignature="sparkle:edSignature=bsJGLVf5F/x6OSxfxu+7fesOLZ5vMIbs2o827RobCu8vpSjMoEEweyU18WUut6FTcGo0VIXK0CP+s5VmbRKIAw== length=4101989"/>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
         </item>
     </channel>
