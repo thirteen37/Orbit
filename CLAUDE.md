@@ -94,6 +94,54 @@ _Document failed approaches here so agents don't repeat mistakes._
 **Solution:** Added usleep(300_000) between space switches
 -->
 
+### NSWorkspace notifications never reach NotificationCenter.default (2026-09-08)
+**What was tried:** Observing `NSWorkspace` notifications via
+`NotificationCenter.default.addObserver(forName:object:queue:)`.
+**Why it failed:** `NSWorkspace` posts only to `NSWorkspace.shared.notificationCenter`.
+The default center receives nothing. Verified with a probe registering both centers
+and forcing a real app activation: default `false`, workspace center `true`. The
+observer registers without error and simply never fires — there is no symptom at
+the call site.
+**Scope when found:** every `NSWorkspace` observer in the codebase was dead.
+`WindowMonitor`'s launch/terminate observers, so apps launched after Orbit started
+never got an AXObserver and no rule ever applied to them; and `SpaceTracker`'s
+space-change observers, so `currentSpaceIndex` never updated.
+**Solution:** Register and remove on `NSWorkspace.shared.notificationCenter`. An
+observer must be removed from the center it was added to. Orbit's own custom
+notifications, such as `AccessibilityPermission.statusDidChangeNotification`,
+correctly stay on the default center.
+**Lesson:** a component whose job is to receive an OS event needs one test that
+delivers that event. Lifecycle tests (`isMonitoring` flags, idempotent stop, weak
+delegate) all pass against an observer wired to a center that never delivers.
+
+### CGSCopySpaces returns an empty array; use CGSCopyManagedDisplaySpaces (2026-09-08)
+**What was tried:** `CGSCopySpaces(connection, 1)` to enumerate user spaces and build
+the space index map.
+**Why it failed:** It returns an EMPTY array on current macOS. Empty arrays cast
+cleanly to `[CGSSpaceID]`, so the `guard let` never bailed — it just built an empty
+map, and every lookup fell through to `?? 1`. `SpaceTracker` reported space 1
+unconditionally with `spaceCount` 0, which silently degraded `move_to_space` rules
+because `processWindow`'s `guard currentSpace != targetSpace` compared against a
+constant. Log symptom: "currently on space 1 of 0".
+**Probed alternatives before choosing:**
+```
+CGSCopySpaces(cid, 1)             -> count=0
+CGSCopySpaces(cid, 7)             -> [3, 1]   right ids, WRONG order
+CGSCopyManagedDisplaySpaces(cid)  -> per-display dicts, spaces in display order
+```
+**Solution:** `CGSCopyManagedDisplaySpaces`, filtering to `type == 0` so fullscreen
+spaces do not consume an index, continuing the 1-based index across displays.
+
+### build-app.sh must bundle Sparkle.framework (2026-09-08)
+**What was tried:** Running `./scripts/build-app.sh` and launching the result.
+**Why it failed:** The script never copied `Sparkle.framework` into the bundle, so
+the app died at launch before any of its own code ran:
+`Library not loaded: @rpath/Sparkle.framework/Versions/B/Sparkle`. Broken since
+Sparkle was integrated; `release.yml` calls the same script, so released builds were
+affected too.
+**Solution:** Copy the framework into `Contents/Frameworks`, add the
+`@executable_path/../Frameworks` rpath, and sign nested code before the outer bundle.
+
 ### Testing Requirements
 
 Include relevant tests with each major feature:

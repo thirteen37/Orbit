@@ -16,8 +16,8 @@ func CGSMainConnectionID() -> CGSConnectionID
 @_silgen_name("CGSGetActiveSpace")
 func CGSGetActiveSpace(_ connection: CGSConnectionID) -> CGSSpaceID
 
-@_silgen_name("CGSCopySpaces")
-func CGSCopySpaces(_ connection: CGSConnectionID, _ mask: Int) -> CFArray
+@_silgen_name("CGSCopyManagedDisplaySpaces")
+func CGSCopyManagedDisplaySpaces(_ connection: CGSConnectionID) -> CFArray?
 
 // MARK: - SpaceTrackerDelegate
 
@@ -87,7 +87,7 @@ public final class SpaceTracker: @unchecked Sendable {
     public func startTracking() {
         guard !isTracking else { return }
 
-        notificationObserver = NotificationCenter.default.addObserver(
+        notificationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification,
             object: NSWorkspace.shared,
             queue: .main
@@ -104,7 +104,7 @@ public final class SpaceTracker: @unchecked Sendable {
         guard isTracking else { return }
 
         if let observer = notificationObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
             notificationObserver = nil
         }
 
@@ -117,16 +117,36 @@ public final class SpaceTracker: @unchecked Sendable {
     public func refreshSpaceList() {
         spaceIDToIndex.removeAll()
 
-        // Mask 1 = user spaces (excludes fullscreen spaces, dashboard, etc.)
-        let spacesArray = CGSCopySpaces(connectionID, 1)
-
-        guard let spaces = spacesArray as? [CGSSpaceID] else {
+        // CGSCopySpaces(connection, 1) used to return the user spaces here. On
+        // current macOS it returns an EMPTY array, which cast cleanly to
+        // [CGSSpaceID] and left this map empty - so every lookup below fell
+        // through to `?? 1` and the tracker reported space 1 forever.
+        //
+        // CGSCopyManagedDisplaySpaces returns one dictionary per display, each
+        // with a "Spaces" array in left-to-right order. Note the ordering
+        // matters and the old API got it wrong even when it returned data:
+        // mask 7 yields [3, 1] for spaces that are actually ordered 1, 3.
+        guard let displays = CGSCopyManagedDisplaySpaces(connectionID) as? [[String: Any]] else {
+            Logger.warning(
+                "SpaceTracker: CGSCopyManagedDisplaySpaces returned nothing usable; "
+                    + "space indices will be wrong",
+                category: .monitor
+            )
             return
         }
 
-        // Build the index map (1-indexed)
-        for (index, spaceID) in spaces.enumerated() {
-            spaceIDToIndex[spaceID] = index + 1
+        // 1-indexed, continuing across displays.
+        var index = 1
+        for display in displays {
+            guard let spaces = display["Spaces"] as? [[String: Any]] else { continue }
+            for space in spaces {
+                // type 0 = normal user space; 4 = fullscreen, which has no
+                // position in the user-facing left-to-right ordering.
+                guard (space["type"] as? Int) == 0,
+                      let spaceID = space["id64"] as? CGSSpaceID else { continue }
+                spaceIDToIndex[spaceID] = index
+                index += 1
+            }
         }
     }
 
@@ -200,7 +220,7 @@ public final class SpaceChangeObserver: @unchecked Sendable {
     public func startObserving() {
         guard !isObserving else { return }
 
-        notificationObserver = NotificationCenter.default.addObserver(
+        notificationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification,
             object: NSWorkspace.shared,
             queue: .main
@@ -216,7 +236,7 @@ public final class SpaceChangeObserver: @unchecked Sendable {
         guard isObserving else { return }
 
         if let observer = notificationObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
             notificationObserver = nil
         }
 
