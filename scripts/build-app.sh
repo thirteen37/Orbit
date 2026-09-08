@@ -104,6 +104,65 @@ if [ -f "Resources/menubar-icon.png" ]; then
     cp Resources/menubar-icon*.png "${APP_DIR}/Contents/Resources/"
 fi
 
+# Bundle Sparkle.framework.
+#
+# The binary links Sparkle as @rpath/Sparkle.framework/..., so the framework has
+# to travel inside the bundle and the executable needs an rpath pointing at it.
+# Without this the app dies at launch with "Library not loaded: @rpath/
+# Sparkle.framework/Versions/B/Sparkle" before any of its own code runs.
+SPARKLE_SRC="${BUILD_DIR}/Sparkle.framework"
+if [ -d "$SPARKLE_SRC" ]; then
+    echo "Bundling Sparkle.framework..."
+    mkdir -p "${APP_DIR}/Contents/Frameworks"
+    cp -R "$SPARKLE_SRC" "${APP_DIR}/Contents/Frameworks/"
+
+    # Add the rpath only if it is not already present - install_name_tool errors
+    # on a duplicate, and the binary is rebuilt fresh each run.
+    if ! otool -l "${APP_DIR}/Contents/MacOS/${APP_NAME}" \
+        | grep -q "@executable_path/../Frameworks"; then
+        install_name_tool -add_rpath "@executable_path/../Frameworks" \
+            "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+    fi
+else
+    echo "WARNING: ${SPARKLE_SRC} not found - the app will crash at launch."
+    echo "         Run 'swift build -c release' first."
+fi
+
+# Code signing.
+#
+# Orbit needs Accessibility permission, and macOS ties that grant to the app's
+# signing identity. An ad-hoc signature changes every rebuild, so the grant is
+# revoked each time and has to be re-approved by hand. Signing with a stable
+# identity keeps it.
+#
+# Override with ORBIT_SIGN_IDENTITY, or set it to "-" to force ad-hoc.
+if [ -z "${ORBIT_SIGN_IDENTITY:-}" ]; then
+    # Prefer Developer ID (distributable) over Apple Development (local only).
+    ORBIT_SIGN_IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null \
+        | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')
+    if [ -z "$ORBIT_SIGN_IDENTITY" ]; then
+        ORBIT_SIGN_IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null \
+            | grep -o '"Apple Development: [^"]*"' | head -1 | tr -d '"')
+    fi
+fi
+
+if [ -n "$ORBIT_SIGN_IDENTITY" ] && [ "$ORBIT_SIGN_IDENTITY" != "-" ]; then
+    echo "Signing with: ${ORBIT_SIGN_IDENTITY}"
+    SIGN_ARGS=(--force --timestamp=none --sign "$ORBIT_SIGN_IDENTITY")
+else
+    echo "No signing identity found - using ad-hoc signature."
+    echo "WARNING: Accessibility permission must be re-granted after every rebuild."
+    SIGN_ARGS=(--force --sign -)
+fi
+
+# Nested code first, outermost bundle last - a bundle's signature covers its
+# nested code, so signing the app before the framework invalidates it.
+if [ -d "${APP_DIR}/Contents/Frameworks/Sparkle.framework" ]; then
+    codesign "${SIGN_ARGS[@]}" "${APP_DIR}/Contents/Frameworks/Sparkle.framework"
+fi
+codesign "${SIGN_ARGS[@]}" "${APP_DIR}"
+codesign --verify --deep "${APP_DIR}" && echo "Signature verified."
+
 echo ""
 echo "Done! App bundle created at: ${APP_DIR}"
 echo ""
