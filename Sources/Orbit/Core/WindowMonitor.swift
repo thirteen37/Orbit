@@ -175,11 +175,11 @@ public final class WindowMonitor: @unchecked Sendable {
 
         // Remove workspace observers
         if let observer = launchObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
             launchObserver = nil
         }
         if let observer = terminationObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
             terminationObserver = nil
         }
 
@@ -252,7 +252,7 @@ public final class WindowMonitor: @unchecked Sendable {
 
     /// Setup NSWorkspace observers for app launch/termination
     private func setupWorkspaceObservers() {
-        launchObserver = NotificationCenter.default.addObserver(
+        launchObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
             object: NSWorkspace.shared,
             queue: .main
@@ -263,7 +263,7 @@ public final class WindowMonitor: @unchecked Sendable {
             self?.handleAppLaunch(app)
         }
 
-        terminationObserver = NotificationCenter.default.addObserver(
+        terminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didTerminateApplicationNotification,
             object: NSWorkspace.shared,
             queue: .main
