@@ -142,6 +142,30 @@ affected too.
 **Solution:** Copy the framework into `Contents/Frameworks`, add the
 `@executable_path/../Frameworks` rpath, and sign nested code before the outer bundle.
 
+### Swift 6: conditional casts to CF opaque types are a compile error (2026-09-08)
+**What was tried:** Replacing a force-cast of a `CFTypeRef` from an Accessibility
+call with the safe `ref as? AXUIElement`, to avoid trapping the process on an
+unexpected type.
+**Why it failed:** Swift 6 rejects it outright — not a warning, a hard error:
+```
+error: conditional downcast to CoreFoundation type 'AXUIElement' will always succeed
+note:  did you mean to explicitly compare the CFTypeIDs of 'ref' and 'AXUIElement'?
+```
+The usual reflex ("`as?` is the safe version of `as!`") does not apply to CF opaque
+types, and the fix is buried in the compiler's own `note:` line.
+**Solution:** Compare type IDs explicitly, then force-cast:
+```swift
+guard CFGetTypeID(ref) == AXUIElementGetTypeID() else { return nil }
+let element = ref as! AXUIElement
+```
+Verified: this compiles warning-free, rejects a `CFString`, and accepts a real
+`AXUIElement`.
+**Where this matters here:** `SpaceMover.swift:153` force-casts
+`positionRef as! AXValue`. That one is not a trap risk — `AXValueGetValue` returns
+`false` rather than trapping on a type mismatch — but anyone hardening it will hit
+this wall. Values read from *other* processes' AX servers are the ones worth
+guarding, since a buggy third-party AX implementation can return any CFType.
+
 ### Testing Requirements
 
 Include relevant tests with each major feature:
